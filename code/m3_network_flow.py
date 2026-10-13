@@ -25,8 +25,9 @@ DMAX_LIST = [1, 2, 3, 5, 8]
 BIG_M = 1000.0
 
 
-def redirect(a, c, dist, dmax, rho=RHO_TARGET):
-    e = np.maximum(0, a - rho * c); s = np.maximum(0, rho * c - a)
+def redirect(a, c, dist, dmax, rho=RHO_TARGET, compliance=1.0):
+    """compliance = share of the excess whose drivers follow guidance (1 = everybody)."""
+    e = compliance * np.maximum(0, a - rho * c); s = np.maximum(0, rho * c - a)
     I = np.where(e > 1e-9)[0]; J = np.where(s > 1e-9)[0]
     arcs = [(i, j, dist[i, j]) for i in I for j in J if i != j and dist[i, j] <= dmax]
     nI, nA = len(I), len(arcs)
@@ -71,6 +72,53 @@ def network_simplex_check(a, c, dist, dmax, rho=RHO_TARGET, unit=0.1):
     return moved * unit
 
 
+def max_flow_min_cut(a, c, dist, dmax, rho=RHO_TARGET, unit=0.01):
+    """Max-flow / min-cut view of guidance: S -> overloaded i (cap e_i) -> reachable j (uncapacitated) -> T (cap s_j).
+    The max flow is the largest redirectable excess (the min-cost-flow LP above reaches it, because M > any detour).
+    The min cut certifies it: cut = sum of e_i over zones on the sink side (fully absorbed) + sum of s_j over
+    receiving zones on the source side (saturated neighbourhoods). Source-side overloaded zones form the set K
+    whose excess exceeds the spare capacity of all zones within dmax (Hall-type deficiency) -> where piles are needed."""
+    e = np.floor(np.maximum(0, a - rho * c) / unit).astype(int); s = np.floor(np.maximum(0, rho * c - a) / unit).astype(int)
+    Gph = nx.DiGraph()
+    I = np.where(e > 0)[0]; J = np.where(s > 0)[0]
+    for i in I:
+        Gph.add_edge('S', ('o', i), capacity=int(e[i]))
+        for j in J:
+            if i != j and dist[i, j] <= dmax:
+                Gph.add_edge(('o', i), ('d', j))                 # no capacity attribute = infinite
+    for j in J:
+        Gph.add_edge(('d', j), 'T', capacity=int(s[j]))
+    cut, (S_side, T_side) = nx.minimum_cut(Gph, 'S', 'T')
+    K = [n[1] for n in S_side if isinstance(n, tuple) and n[0] == 'o']
+    NK = [n[1] for n in S_side if isinstance(n, tuple) and n[0] == 'd']
+    isolated = [i for i in I if not any(dist[i, j] <= dmax and i != j for j in J)]
+    return dict(max_flow=cut * unit, excess_total=float(e.sum() * unit),
+                cut_from_absorbed_zones=float(sum(e[i] for i in I if i not in K) * unit),
+                cut_from_saturated_receivers=float(sum(s[j] for j in NK) * unit),
+                deficient_set_size=len(K), deficient_set_excess=float(sum(e[i] for i in K) * unit),
+                deficient_set_neighbour_spare=float(sum(s[j] for j in NK) * unit),
+                saturated_receivers=len(NK), isolated_overloaded_zones=len(isolated), overloaded_zones=len(I),
+                deficient_zone_ids=[int(i) for i in K], saturated_receiver_ids=[int(j) for j in NK])
+
+
+def rho_sensitivity(A, c, dist, dmax=3, rhos=(0.75, 0.80, 0.85, 0.90, 0.95), compliance=1.0, key='rho'):
+    """Guidance results vs the planning target utilisation rho* (Dmax fixed), or vs compliance (key='compliance')."""
+    rows = []
+    for rho in (rhos if key == 'rho' else [RHO_TARGET] * len(compliance)):
+        comp = 1.0 if key == 'rho' else compliance[len(rows)]
+        tot_e = tot_m = tot_km = 0.0; newA = A.copy()
+        for h in range(24):
+            r = redirect(A[h], c, dist, dmax, rho, comp)
+            tot_e += r['excess']; tot_m += r['moved']; tot_km += r['cost_km']
+            for i, j, fl in r['flows']:
+                newA[h, i] -= fl; newA[h, j] += fl
+        rows.append(dict(rho=rho, compliance=comp, share_redirected=tot_m / tot_e, mean_detour_km=tot_km / max(tot_m, 1e-9),
+                         unstable_zones_after=int((newA.max(axis=0) >= c).sum()),
+                         piles_needed_after=int(np.maximum(0, np.floor(newA.max(axis=0)) + 1 - c).sum()),
+                         max_util_after=float((newA / c).max())))
+    return rows
+
+
 def main():
     d = load(); zt = d['zt']; mean, _ = load_profiles()
     zones = list(mean.columns); c = zt.piles.reindex(zones).values.astype(float)
@@ -106,6 +154,18 @@ def main():
                    peak_excess=r['excess'], peak_redirected_lp=r['moved'], peak_redirected_network_simplex=ns,
                    peak_flows=len(r['flows']), receiving_zones_capacity_binding=int((duals > 1e-6).sum()),
                    receiving_zones_total=int(len(duals)), results=rows)
+    mfmc = max_flow_min_cut(A[h_peak], c, dist, 3)
+    # do the saturated receivers of the min cut coincide with the receiving zones whose capacity dual is positive?
+    J = np.where(np.maximum(0, RHO_TARGET * c - A[h_peak]) > 1e-9)[0]
+    dual_pos = set(int(J[k]) for k in np.where(duals > 1e-6)[0])
+    sat = set(mfmc.pop('saturated_receiver_ids'))
+    summary['max_flow_min_cut_peak'] = {k: v for k, v in mfmc.items() if k != 'deficient_zone_ids'}
+    summary['max_flow_min_cut_peak']['deficient_zones'] = [int(zones[i]) for i in mfmc['deficient_zone_ids']]
+    summary['max_flow_min_cut_peak']['lp_redirected_same_hour'] = r['moved']
+    summary['max_flow_min_cut_peak']['saturated_receivers_with_positive_dual'] = len(sat & dual_pos)
+    summary['rho_sensitivity_dmax3'] = rho_sensitivity(A, c, dist)
+    # share_redirected is relative to the complying excess; piles needed is the planning-relevant measure
+    summary['compliance_sensitivity_dmax3'] = rho_sensitivity(A, c, dist, compliance=(0.5, 0.75, 1.0), key='compliance')
     json.dump(summary, open(OUT / 'm3_summary.json', 'w'), indent=2, default=float)
     print({k: v for k, v in summary.items() if k != 'results'})
 

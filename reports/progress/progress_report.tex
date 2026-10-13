@@ -5,13 +5,14 @@
 \usepackage[font=small,labelfont=bf]{caption}
 \setlength{\parskip}{4pt}\setlength{\parindent}{0pt}
 \newcommand{\TODO}[1]{\textcolor{red}{[#1]}}
+\IfFileExists{../team_private.tex}{\input{../team_private.tex}}{\input{../team.tex}}
 \newcommand{\fig}[1]{../../figures/#1}
 
 \begin{document}
 \begin{center}
 {\large Operations Research 76000093 --- Final Project Progress Report}\\[6pt]
 {\LARGE\bfseries Right Place, Right Time: Capacity, Guidance and Pricing\\[2pt] for Public EV Charging in Shenzhen}\\[8pt]
-Nguyen Van Thanh, \TODO{Member 2}, \TODO{Member 3}, \TODO{Member 4}, \TODO{Member 5}\qquad \TODO{Date: Nov 30}
+\TeamNames\qquad 30 November 2026
 \end{center}
 
 \section{The problem we are studying, and why}
@@ -44,7 +45,7 @@ M5 Simulation + simulated annealing & do M1/M2 hold under time-varying demand an
 \item \textbf{M1}: 48 zones become unstable although network occupancy is only 56\%; the piles needed for stability number 598. A useful theoretical result: total waiting time does not depend on the unknown mean session length ($\lambda W_q = aC/(c-a)$).
 \item \textbf{M2}: relocation dominates. At a budget of 1{,}000 new-pile units, the optimal mix of new and relocated piles leaves 5.0 driver-hours of waiting per day, against 952 with new piles only; a proportional rule leaves 41 zones unstable. The shadow price of the budget falls from 105 to 0.01 driver-hours/day per unit between $B = 250$ and $1000$.
 \item \textbf{M3}: guidance within 3\,km redirects 70\% of the excess load and cuts the piles needed for stability from 598 to 185. LP and network simplex agree (748.1 vs 745.3 at the peak hour, within discretisation).
-\item \textbf{M4}: the estimated price sensitivity is $\hat\beta = 0.281$ per yuan/kWh ($t = -2.21$). The revenue-neutral optimal fee halves the congestion index but changes the number of unstable zones only from 48 to 45: price mostly helps in time, not in space.
+\item \textbf{M4}: the estimated price sensitivity is $\hat\beta = 0.281$ per yuan/kWh ($t = -2.21$ for the slope $-\beta$). The revenue-neutral optimal fee halves the congestion index but changes the number of unstable zones only from 48 to 45: price mostly helps in time, not in space.
 \item \textbf{M5}: the simulation reproduces Erlang-C (all test cases within 0.35 standard errors). With driver spill-over, simulated annealing improves on the Erlang-optimal plan by 34\% out of sample.
 \end{itemize}
 \begin{figure}[H]\centering
@@ -63,17 +64,17 @@ Dec 15--(TBA) & Final report integration; 10--15 slides with one section per mem
 \begin{center}\small
 \begin{tabular}{@{}p{3.4cm}p{12.2cm}@{}}\toprule
 Member & Responsibility (status)\\\midrule
-\TODO{Member A} & M1 queueing, data pipeline, growth scenarios (done; writing up)\\
-\TODO{Member B} & M2 MILP, duality and sensitivity (done; integrated analysis in progress)\\
-\TODO{Member C} & M3 min-cost flow, network simplex (done; combination with M4 in progress)\\
-\TODO{Member D} & M4 estimation and NLP (done; robustness of fee ranges in progress)\\
-\TODO{Member E} & M5 simulation and simulated annealing (done; sensitivity to spill-over parameters planned)\\
+\MOne & M1 queueing, data pipeline, growth scenarios (done; writing up)\\
+\MTwo & M2 MILP, duality and sensitivity (done; integrated analysis in progress)\\
+\MThree & M3 min-cost flow, network simplex (done; combination with M4 in progress)\\
+\MFour & M4 estimation and NLP (done; robustness of fee ranges in progress)\\
+\MFive & M5 simulation and simulated annealing (done; sensitivity to spill-over parameters planned)\\
 All & literature review (two papers each), final report, presentation\\\bottomrule
 \end{tabular}\end{center}
 \textbf{Risks and mitigation.} (i) Weak identification of $\beta$: we report results for $\beta \in [0.1, 1]$. (ii) Censored demand underestimates today's shortage: we plan with growth scenarios and state this as a limitation. (iii) Five members instead of 3--4: we cover five distinct methods, one per member.
 
 \begin{thebibliography}{9}\small
-\bibitem{li2025urbanev} H.~Li, H.~Qu, X.~Tan, \emph{et al.}, ``UrbanEV: An open benchmark dataset for urban electric vehicle charging demand prediction,'' \emph{Scientific Data}, 2025. doi:10.1038/s41597-025-04874-4.
+\bibitem{li2025urbanev} H.~Li, H.~Qu, X.~Tan, L.~You, R.~Zhu, W.~Fan, ``UrbanEV: An open benchmark dataset for urban electric vehicle charging demand prediction,'' \emph{Scientific Data}, 12:523, 2025. doi:10.1038/s41597-025-04874-4.
 \bibitem{cnev2024} CnEVPost, ``Shenzhen NEV penetration reaches record 77.4\% in Jun,'' Jul.~18, 2024.
 \bibitem{cnev2025} CnEVPost, ``China NEV ownership reaches 36.89 million,'' Jul.~14, 2025.
 \end{thebibliography}

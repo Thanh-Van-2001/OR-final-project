@@ -25,7 +25,7 @@ for sid in order:
     for bid, f in BLOBS.items():
         h = h.replace(f'/_blob/{bid}', (FIG / f).as_uri())
     parts.append(h)
-page = f"""<!doctype html><html><head><meta charset="utf-8">
+page = f"""<!doctype html><html><head><meta charset="utf-8"><title>Right Place, Right Time: EV Charging in Shenzhen</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;700&display=swap">
 <style>@page {{ size: 1920px 1080px; margin: 0 }} html, body {{ margin: 0; padding: 0 }}
 section {{ break-after: page }} h1, h2, h3, p, ul, table {{ margin: 0 }}

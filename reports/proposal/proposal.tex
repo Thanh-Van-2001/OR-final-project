@@ -5,12 +5,13 @@
 \usepackage[font=small,labelfont=bf]{caption}
 \setlength{\parskip}{4pt}\setlength{\parindent}{0pt}
 \newcommand{\TODO}[1]{\textcolor{red}{[#1]}}
+\IfFileExists{../team_private.tex}{\input{../team_private.tex}}{\input{../team.tex}}
 
 \begin{document}
 \begin{center}
 {\large Operations Research 76000093 --- Final Project Proposal}\\[6pt]
 {\LARGE\bfseries Right Place, Right Time:\\[2pt] Optimizing Public EV Charging Capacity, Guidance and Pricing in Shenzhen}\\[8pt]
-Team members: Nguyen Van Thanh, \TODO{Member 2}, \TODO{Member 3}, \TODO{Member 4}, \TODO{Member 5}
+Team members: \TeamNames
 \end{center}
 
 \section{What we will study, and why it matters}
@@ -69,20 +70,20 @@ Dec 1--(TBA) & Integrated policy portfolio, final analysis, final report, 10--15
 \medskip
 \begin{tabular}{@{}p{4.2cm}p{11.5cm}@{}}\toprule
 \textbf{Member} & \textbf{Responsibility}\\\midrule
-\TODO{Member A} & M1 queueing model, demand estimation from data, growth scenarios; data pipeline.\\
-\TODO{Member B} & M2 MILP expansion/relocation, duality and sensitivity analysis.\\
-\TODO{Member C} & M3 min-cost-flow guidance model, network simplex cross-check.\\
-\TODO{Member D} & M4 logit price-sensitivity estimation, NLP fee design, KKT analysis.\\
-\TODO{Member E} & M5 discrete-event simulation, simulated annealing, out-of-sample validation.\\
+\MOne & M1 queueing model, demand estimation from data, growth scenarios; data pipeline.\\
+\MTwo & M2 MILP expansion/relocation, duality and sensitivity analysis.\\
+\MThree & M3 min-cost-flow guidance model, network simplex cross-check.\\
+\MFour & M4 logit price-sensitivity estimation, NLP fee design, KKT analysis.\\
+\MFive & M5 discrete-event simulation, simulated annealing, out-of-sample validation.\\
 All & Literature review (two papers each), integrated policy analysis, report writing, slides.\\\bottomrule
 \end{tabular}
 
 \textbf{Team size.} The guidelines specify 3--4 students; our team has five. We request the instructor's approval. Following the rule of one method per member, we commit to five distinct methods.
 
 \begin{thebibliography}{99}\small
-\bibitem{li2025urbanev} H.~Li, H.~Qu, X.~Tan, \emph{et al.}, ``UrbanEV: An open benchmark dataset for urban electric vehicle charging demand prediction,'' \emph{Scientific Data}, 2025. doi:10.1038/s41597-025-04874-4.
-\bibitem{kuang2024} H.~Kuang, X.~Zhang, H.~Qu, L.~You, R.~Zhu, J.~Li, ``Unravelling the effect of electricity price on electric vehicle charging behavior: A case study in Shenzhen, China,'' \emph{Sustainable Cities and Society}, 2024. doi:10.1016/j.scs.2024.105836.
-\bibitem{qu2024} H.~Qu, H.~Kuang, J.~Li, L.~You, ``A physics-informed and attention-based graph learning approach for regional electric vehicle charging demand prediction,'' \emph{IEEE Trans. Intelligent Transportation Systems}, 2024.
+\bibitem{li2025urbanev} H.~Li, H.~Qu, X.~Tan, L.~You, R.~Zhu, W.~Fan, ``UrbanEV: An open benchmark dataset for urban electric vehicle charging demand prediction,'' \emph{Scientific Data}, 12:523, 2025. doi:10.1038/s41597-025-04874-4.
+\bibitem{kuang2024} H.~Kuang, X.~Zhang, H.~Qu, L.~You, R.~Zhu, J.~Li, ``Unraveling the effect of electricity price on electric vehicle charging behavior: A case study in Shenzhen, China,'' \emph{Sustainable Cities and Society}, 115:105836, 2024. doi:10.1016/j.scs.2024.105836.
+\bibitem{qu2024} H.~Qu, H.~Kuang, Q.~Wang, J.~Li, L.~You, ``A physics-informed and attention-based graph learning approach for regional electric vehicle charging demand prediction,'' \emph{IEEE Trans.\ Intelligent Transportation Systems}, 25(10):14284--14297, 2024. doi:10.1109/TITS.2024.3401850.
 \bibitem{hodgson1990} M.~J.~Hodgson, ``A flow-capturing location-allocation model,'' \emph{Geographical Analysis}, 22(3):270--279, 1990.
 \bibitem{kuby2005} M.~Kuby, S.~Lim, ``The flow-refueling location problem for alternative-fuel vehicles,'' \emph{Socio-Economic Planning Sciences}, 39(2):125--145, 2005.
 \bibitem{he2013} F.~He, D.~Wu, Y.~Yin, Y.~Guan, ``Optimal deployment of public charging stations for plug-in hybrid electric vehicles,'' \emph{Transportation Research Part B}, 47:87--101, 2013.

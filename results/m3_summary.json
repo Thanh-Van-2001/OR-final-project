@@ -64,5 +64,120 @@
       "piles_needed_before": 598,
       "piles_needed_after": 3
     }
+  ],
+  "max_flow_min_cut_peak": {
+    "max_flow": 747.85,
+    "excess_total": 1064.27,
+    "cut_from_absorbed_zones": 583.14,
+    "cut_from_saturated_receivers": 164.71,
+    "deficient_set_size": 23,
+    "deficient_set_excess": 481.13,
+    "deficient_set_neighbour_spare": 164.71,
+    "saturated_receivers": 18,
+    "isolated_overloaded_zones": 9,
+    "overloaded_zones": 69,
+    "deficient_zones": [
+      575,
+      844,
+      851,
+      882,
+      888,
+      943,
+      570,
+      771,
+      1029,
+      592,
+      1049,
+      596,
+      633,
+      842,
+      651,
+      881,
+      715,
+      568,
+      576,
+      595,
+      601,
+      346,
+      552
+    ],
+    "lp_redirected_same_hour": 748.1455801104973,
+    "saturated_receivers_with_positive_dual": 18
+  },
+  "rho_sensitivity_dmax3": [
+    {
+      "rho": 0.75,
+      "compliance": 1.0,
+      "share_redirected": 0.6464990082700617,
+      "mean_detour_km": 1.7924281272831555,
+      "unstable_zones_after": 20,
+      "piles_needed_after": 241,
+      "max_util_after": 1.7928176795580109
+    },
+    {
+      "rho": 0.8,
+      "compliance": 1.0,
+      "share_redirected": 0.6917146608895897,
+      "mean_detour_km": 1.75498560026673,
+      "unstable_zones_after": 20,
+      "piles_needed_after": 213,
+      "max_util_after": 1.7928176795580109
+    },
+    {
+      "rho": 0.85,
+      "compliance": 1.0,
+      "share_redirected": 0.7045997937805352,
+      "mean_detour_km": 1.7119431836137624,
+      "unstable_zones_after": 17,
+      "piles_needed_after": 185,
+      "max_util_after": 1.7928176795580109
+    },
+    {
+      "rho": 0.9,
+      "compliance": 1.0,
+      "share_redirected": 0.7059618447715545,
+      "mean_detour_km": 1.6954479573929284,
+      "unstable_zones_after": 14,
+      "piles_needed_after": 165,
+      "max_util_after": 1.7928176795580109
+    },
+    {
+      "rho": 0.95,
+      "compliance": 1.0,
+      "share_redirected": 0.7093063006016967,
+      "mean_detour_km": 1.6935938955351661,
+      "unstable_zones_after": 13,
+      "piles_needed_after": 152,
+      "max_util_after": 1.7928176795580109
+    }
+  ],
+  "compliance_sensitivity_dmax3": [
+    {
+      "rho": 0.85,
+      "compliance": 0.5,
+      "share_redirected": 0.7585454550801757,
+      "mean_detour_km": 1.6465971441300284,
+      "unstable_zones_after": 31,
+      "piles_needed_after": 245,
+      "max_util_after": 1.7928176795580109
+    },
+    {
+      "rho": 0.85,
+      "compliance": 0.75,
+      "share_redirected": 0.7294167215099879,
+      "mean_detour_km": 1.6764493359088997,
+      "unstable_zones_after": 18,
+      "piles_needed_after": 184,
+      "max_util_after": 1.7928176795580109
+    },
+    {
+      "rho": 0.85,
+      "compliance": 1.0,
+      "share_redirected": 0.7045997937805352,
+      "mean_detour_km": 1.7119431836137624,
+      "unstable_zones_after": 17,
+      "piles_needed_after": 185,
+      "max_util_after": 1.7928176795580109
+    }
   ]
 }

@@ -14,6 +14,51 @@ import matplotlib.pyplot as plt
 from common import load, load_profiles, erlang_c, wq, daily_wait_hours, OUT, FIG, TAU
 
 GROWTH = [1.0, 1.5, 2.0, 2.5]
+ALPHAS = [0.5, 0.2, 0.1]     # service-level targets: P(wait) <= alpha in every hour
+
+
+def min_piles(a, alpha):
+    """Smallest c with ErlangC(c, a) <= alpha (C decreases in c, so a linear search from floor(a)+1 is exact)."""
+    c = int(np.floor(a)) + 1
+    while erlang_c(c, a) > alpha:
+        c += 1
+    return c
+
+
+def halfin_whitt_beta(alpha):
+    """Square-root staffing c = a + beta*sqrt(a): solve alpha = 1 / (1 + beta*Phi(beta)/phi(beta)) by bisection."""
+    from scipy.stats import norm
+    lo, hi = 1e-6, 6.0
+    for _ in range(100):
+        b = (lo + hi) / 2
+        if 1.0 / (1.0 + b * norm.cdf(b) / norm.pdf(b)) > alpha:
+            lo = b
+        else:
+            hi = b
+    return (lo + hi) / 2
+
+
+def service_level_design(c, prof, g):
+    """Queueing optimisation: per-zone minimum piles so that P(wait) <= alpha at every hour (peak hour binds,
+    because ErlangC increases in a). Compared with square-root staffing and with the existing stock."""
+    peak = g * prof.max().values
+    out = {}
+    for alpha in ALPHAS:
+        cstar = np.array([min_piles(a, alpha) for a in peak])
+        beta = halfin_whitt_beta(alpha)
+        srs = np.ceil(peak + beta * np.sqrt(peak)).astype(int)
+        cur = c.values
+        small = peak <= np.quantile(peak, 0.25); large = peak >= np.quantile(peak, 0.75)
+        safety = (cstar - peak) / peak
+        out[str(alpha)] = dict(
+            piles_required_total=int(cstar.sum()), piles_existing_total=int(cur.sum()),
+            zones_short=int((cstar > cur).sum()), deficit_piles=int(np.maximum(0, cstar - cur).sum()),
+            surplus_piles=int(np.maximum(0, cur - cstar).sum()),
+            hw_beta=float(beta), srs_within_1_pile_share=float(np.mean(np.abs(srs - cstar) <= 1)),
+            srs_max_abs_diff=int(np.abs(srs - cstar).max()), srs_mean_diff=float(np.mean(srs - cstar)),
+            safety_ratio_median_small_zones=float(np.median(safety[small])),
+            safety_ratio_median_large_zones=float(np.median(safety[large])))
+    return out
 
 
 def zone_table(c, prof, g, tau=TAU):
@@ -51,6 +96,8 @@ def main():
     # design-day (p90) censoring diagnostic
     summary['design_day_p90_zones_saturated'] = int(((design.max() / c) >= 0.999).sum())
     summary['mean_day_zones_saturated'] = int(((mean.max() / c) >= 0.999).sum())
+    # service-level optimisation (minimum piles per zone for P(wait) <= alpha), growth 1.5 / 2 / 2.5
+    summary['service_level_design'] = {str(g): service_level_design(c, mean, g) for g in (1.5, 2.0, 2.5)}
     json.dump(summary, open(OUT / 'm1_summary.json', 'w'), indent=2)
     print(json.dumps(summary, indent=2))
 

@@ -20,3 +20,6 @@ data/UrbanEV/data/*
 !data/UrbanEV/data/s_price.csv
 !data/UrbanEV/data/e_price.csv
 !data/UrbanEV/data/volume-11kW.csv
+# private copy of team details (student IDs) for the printed submission
+reports/team_private.tex
+*.zip.part

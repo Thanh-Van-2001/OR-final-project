@@ -41,5 +41,130 @@
     "2.0": 2066.4996621279643
   },
   "design_day_p90_zones_saturated": 10,
-  "mean_day_zones_saturated": 0
+  "mean_day_zones_saturated": 0,
+  "service_level_design": {
+    "1.5": {
+      "0.5": {
+        "piles_required_total": 10195,
+        "piles_existing_total": 17532,
+        "zones_short": 22,
+        "deficit_piles": 124,
+        "surplus_piles": 7461,
+        "hw_beta": 0.5060544689891806,
+        "srs_within_1_pile_share": 1.0,
+        "srs_max_abs_diff": 1,
+        "srs_mean_diff": -0.15272727272727274,
+        "safety_ratio_median_small_zones": 0.3463505346350535,
+        "safety_ratio_median_large_zones": 0.0672873630103774
+      },
+      "0.2": {
+        "piles_required_total": 11041,
+        "piles_existing_total": 17532,
+        "zones_short": 35,
+        "deficit_piles": 232,
+        "surplus_piles": 6723,
+        "hw_beta": 1.0615162754187177,
+        "srs_within_1_pile_share": 1.0,
+        "srs_max_abs_diff": 1,
+        "srs_mean_diff": -0.38181818181818183,
+        "safety_ratio_median_small_zones": 0.582513661202186,
+        "safety_ratio_median_large_zones": 0.13369330453563713
+      },
+      "0.1": {
+        "piles_required_total": 11597,
+        "piles_existing_total": 17532,
+        "zones_short": 41,
+        "deficit_piles": 320,
+        "surplus_piles": 6255,
+        "hw_beta": 1.420186888100441,
+        "srs_within_1_pile_share": 1.0,
+        "srs_max_abs_diff": 1,
+        "srs_mean_diff": -0.509090909090909,
+        "safety_ratio_median_small_zones": 0.7658536585365852,
+        "safety_ratio_median_large_zones": 0.1783854166666666
+      }
+    },
+    "2.0": {
+      "0.5": {
+        "piles_required_total": 13415,
+        "piles_existing_total": 17532,
+        "zones_short": 61,
+        "deficit_piles": 834,
+        "surplus_piles": 4951,
+        "hw_beta": 0.5060544689891806,
+        "srs_within_1_pile_share": 1.0,
+        "srs_max_abs_diff": 1,
+        "srs_mean_diff": -0.19272727272727272,
+        "safety_ratio_median_small_zones": 0.27106741573033705,
+        "safety_ratio_median_large_zones": 0.05736968244457762
+      },
+      "0.2": {
+        "piles_required_total": 14367,
+        "piles_existing_total": 17532,
+        "zones_short": 85,
+        "deficit_piles": 1158,
+        "surplus_piles": 4323,
+        "hw_beta": 1.0615162754187177,
+        "srs_within_1_pile_share": 1.0,
+        "srs_max_abs_diff": 1,
+        "srs_mean_diff": -0.32727272727272727,
+        "safety_ratio_median_small_zones": 0.49234393404004717,
+        "safety_ratio_median_large_zones": 0.11324906895384274
+      },
+      "0.1": {
+        "piles_required_total": 15015,
+        "piles_existing_total": 17532,
+        "zones_short": 93,
+        "deficit_piles": 1406,
+        "surplus_piles": 3923,
+        "hw_beta": 1.420186888100441,
+        "srs_within_1_pile_share": 1.0,
+        "srs_max_abs_diff": 1,
+        "srs_mean_diff": -0.5890909090909091,
+        "safety_ratio_median_small_zones": 0.6523876404494381,
+        "safety_ratio_median_large_zones": 0.15139949109414752
+      }
+    },
+    "2.5": {
+      "0.5": {
+        "piles_required_total": 16608,
+        "piles_existing_total": 17532,
+        "zones_short": 104,
+        "deficit_piles": 2370,
+        "surplus_piles": 3294,
+        "hw_beta": 0.5060544689891806,
+        "srs_within_1_pile_share": 1.0,
+        "srs_max_abs_diff": 1,
+        "srs_mean_diff": -0.1709090909090909,
+        "safety_ratio_median_small_zones": 0.22481203007518802,
+        "safety_ratio_median_large_zones": 0.049275362318840554
+      },
+      "0.2": {
+        "piles_required_total": 17678,
+        "piles_existing_total": 17532,
+        "zones_short": 116,
+        "deficit_piles": 2894,
+        "surplus_piles": 2748,
+        "hw_beta": 1.0615162754187177,
+        "srs_within_1_pile_share": 1.0,
+        "srs_max_abs_diff": 1,
+        "srs_mean_diff": -0.37454545454545457,
+        "safety_ratio_median_small_zones": 0.41729200652528553,
+        "safety_ratio_median_large_zones": 0.10117080643396424
+      },
+      "0.1": {
+        "piles_required_total": 18378,
+        "piles_existing_total": 17532,
+        "zones_short": 127,
+        "deficit_piles": 3264,
+        "surplus_piles": 2418,
+        "hw_beta": 1.420186888100441,
+        "srs_within_1_pile_share": 1.0,
+        "srs_max_abs_diff": 1,
+        "srs_mean_diff": -0.5163636363636364,
+        "safety_ratio_median_small_zones": 0.5675236806495261,
+        "safety_ratio_median_large_zones": 0.13398507305792073
+      }
+    }
+  }
 }
