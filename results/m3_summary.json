@@ -1,0 +1,68 @@
+{
+  "scenario_growth": 2.0,
+  "rho_target": 0.85,
+  "peak_hour": 1,
+  "peak_excess": 1064.6093922651935,
+  "peak_redirected_lp": 748.1455801104973,
+  "peak_redirected_network_simplex": 745.3000000000001,
+  "peak_flows": 89,
+  "receiving_zones_capacity_binding": 39,
+  "receiving_zones_total": 206,
+  "results": [
+    {
+      "dmax_km": 1,
+      "excess_erlang_hours": 10520.0908839779,
+      "redirected_erlang_hours": 1075.8569060773484,
+      "share_redirected": 0.10226688323728064,
+      "mean_detour_km": 0.7592519730754499,
+      "unstable_zones_before": 48,
+      "unstable_zones_after": 44,
+      "piles_needed_before": 598,
+      "piles_needed_after": 561
+    },
+    {
+      "dmax_km": 2,
+      "excess_erlang_hours": 10520.0908839779,
+      "redirected_erlang_hours": 5302.517127071823,
+      "share_redirected": 0.5040371975443251,
+      "mean_detour_km": 1.4288149691289485,
+      "unstable_zones_before": 48,
+      "unstable_zones_after": 27,
+      "piles_needed_before": 598,
+      "piles_needed_after": 319
+    },
+    {
+      "dmax_km": 3,
+      "excess_erlang_hours": 10520.0908839779,
+      "redirected_erlang_hours": 7412.4538674033165,
+      "share_redirected": 0.7045997937805352,
+      "mean_detour_km": 1.7119431836137624,
+      "unstable_zones_before": 48,
+      "unstable_zones_after": 17,
+      "piles_needed_before": 598,
+      "piles_needed_after": 185
+    },
+    {
+      "dmax_km": 5,
+      "excess_erlang_hours": 10520.0908839779,
+      "redirected_erlang_hours": 10042.906629834255,
+      "share_redirected": 0.9546406718909247,
+      "mean_detour_km": 2.238338375027028,
+      "unstable_zones_before": 48,
+      "unstable_zones_after": 4,
+      "piles_needed_before": 598,
+      "piles_needed_after": 32
+    },
+    {
+      "dmax_km": 8,
+      "excess_erlang_hours": 10520.0908839779,
+      "redirected_erlang_hours": 10474.058839779005,
+      "share_redirected": 0.9956243682011339,
+      "mean_detour_km": 2.408748602851669,
+      "unstable_zones_before": 48,
+      "unstable_zones_after": 1,
+      "piles_needed_before": 598,
+      "piles_needed_after": 3
+    }
+  ]
+}

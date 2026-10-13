@@ -1,0 +1,149 @@
+{
+  "policies": [
+    {
+      "growth": 1.5,
+      "policy": "none",
+      "unstable_zones": 13,
+      "piles_needed": 61,
+      "min_budget_for_target": 41.0,
+      "target_wait_hours_day": 737.0
+    },
+    {
+      "growth": 1.5,
+      "policy": "pricing",
+      "unstable_zones": 10,
+      "piles_needed": 40,
+      "min_budget_for_target": 20.9,
+      "target_wait_hours_day": 737.0
+    },
+    {
+      "growth": 1.5,
+      "policy": "guidance_3km",
+      "unstable_zones": 3,
+      "piles_needed": 18,
+      "min_budget_for_target": 10.6,
+      "target_wait_hours_day": 737.0
+    },
+    {
+      "growth": 1.5,
+      "policy": "pricing+guidance",
+      "unstable_zones": 3,
+      "piles_needed": 20,
+      "min_budget_for_target": 10.6,
+      "target_wait_hours_day": 737.0
+    },
+    {
+      "growth": 2.0,
+      "policy": "none",
+      "unstable_zones": 48,
+      "piles_needed": 598,
+      "min_budget_for_target": 347.9,
+      "target_wait_hours_day": 982.7
+    },
+    {
+      "growth": 2.0,
+      "policy": "pricing",
+      "unstable_zones": 45,
+      "piles_needed": 403,
+      "min_budget_for_target": 226.0,
+      "target_wait_hours_day": 982.7
+    },
+    {
+      "growth": 2.0,
+      "policy": "guidance_3km",
+      "unstable_zones": 17,
+      "piles_needed": 185,
+      "min_budget_for_target": 138.1,
+      "target_wait_hours_day": 982.7
+    },
+    {
+      "growth": 2.0,
+      "policy": "pricing+guidance",
+      "unstable_zones": 12,
+      "piles_needed": 107,
+      "min_budget_for_target": 80.9,
+      "target_wait_hours_day": 982.7
+    },
+    {
+      "growth": 2.5,
+      "policy": "none",
+      "unstable_zones": 91,
+      "piles_needed": 1931,
+      "min_budget_for_target": 1266.4,
+      "target_wait_hours_day": 1228.3
+    },
+    {
+      "growth": 2.5,
+      "policy": "pricing",
+      "unstable_zones": 87,
+      "piles_needed": 1467,
+      "min_budget_for_target": 744.1,
+      "target_wait_hours_day": 1228.3
+    },
+    {
+      "growth": 2.5,
+      "policy": "guidance_3km",
+      "unstable_zones": 46,
+      "piles_needed": 1144,
+      "min_budget_for_target": 857.3,
+      "target_wait_hours_day": 1228.3
+    },
+    {
+      "growth": 2.5,
+      "policy": "pricing+guidance",
+      "unstable_zones": 32,
+      "piles_needed": 568,
+      "min_budget_for_target": 349.7,
+      "target_wait_hours_day": 1228.3
+    }
+  ],
+  "shadow_prices": [
+    {
+      "budget": 250,
+      "shadow_hours_per_unit": 105.09377219253886,
+      "lp_wait": 4709.690208937187
+    },
+    {
+      "budget": 300,
+      "shadow_hours_per_unit": 28.314726005061967,
+      "lp_wait": 1872.7506353076315
+    },
+    {
+      "budget": 400,
+      "shadow_hours_per_unit": 5.964420466036562,
+      "lp_wait": 534.5588190284761
+    },
+    {
+      "budget": 500,
+      "shadow_hours_per_unit": 1.8972472399829425,
+      "lp_wait": 188.21765385715844
+    },
+    {
+      "budget": 600,
+      "shadow_hours_per_unit": 0.6920965980121901,
+      "lp_wait": 69.77717256262258
+    },
+    {
+      "budget": 800,
+      "shadow_hours_per_unit": 0.08246017961358293,
+      "lp_wait": 10.228985773981549
+    },
+    {
+      "budget": 1000,
+      "shadow_hours_per_unit": 0.01188188682691707,
+      "lp_wait": 4.964599050850666
+    },
+    {
+      "budget": 1500,
+      "shadow_hours_per_unit": 0.0036799381011342726,
+      "lp_wait": 1.4767719104856951
+    },
+    {
+      "budget": 2000,
+      "shadow_hours_per_unit": 0.0010750037888145238,
+      "lp_wait": 0.42165772173029836
+    }
+  ],
+  "target_min_per_driver": 0.25,
+  "dmax": 3
+}

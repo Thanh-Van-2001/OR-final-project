@@ -1,0 +1,67 @@
+{
+  "scenario_growth": 2.0,
+  "kappa": 0.35,
+  "zones_unstable_before": 48,
+  "piles_needed_for_stability": 598,
+  "piles_removable_from_donors": 5062,
+  "min_cost_to_stabilise": 209.29999999999998,
+  "wait_if_only_stabilised_minimally": null,
+  "base_budget": 1000,
+  "base_total_wait": 4.967569522594545,
+  "base_new": 151,
+  "base_rel": 2425,
+  "base_cost": 999.75,
+  "lp_relaxation_obj_gap_hours": 0.0029704717438789885,
+  "budget_shadow_price_hours_per_unit": 0.01188188682691707,
+  "zones_receiving": 128,
+  "zones_donating": 137,
+  "kappa_sensitivity_B1000": {
+    "0.1": {
+      "wait": 1.3329487446203596,
+      "new": 780,
+      "rel": 2193
+    },
+    "0.2": {
+      "wait": 2.1916926780094688,
+      "new": 544,
+      "rel": 2277
+    },
+    "0.35": {
+      "wait": 4.967569522594545,
+      "new": 151,
+      "rel": 2425
+    },
+    "0.5": {
+      "wait": 26.00139034600669,
+      "new": 0,
+      "rel": 2000
+    },
+    "0.75": {
+      "wait": 264.38412114864093,
+      "new": 1,
+      "rel": 1332
+    },
+    "1.0": {
+      "wait": 952.0630114892538,
+      "new": 1000,
+      "rel": 0
+    }
+  },
+  "growth_sensitivity": {
+    "1.5": {
+      "piles_needed": 61,
+      "removable": 6908,
+      "zones_unstable": 13
+    },
+    "2.0": {
+      "piles_needed": 598,
+      "removable": 5062,
+      "zones_unstable": 48
+    },
+    "2.5": {
+      "piles_needed": 1931,
+      "removable": 3565,
+      "zones_unstable": 91
+    }
+  }
+}

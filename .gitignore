@@ -1,0 +1,22 @@
+# Python / LaTeX build artefacts
+__pycache__/
+*.pyc
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+# packaged deliverable (same content as the repo)
+*.zip
+# UrbanEV clone: keep only the files the code uses (+ licence/readme)
+data/UrbanEV/*
+!data/UrbanEV/LICENSE
+!data/UrbanEV/README.md
+!data/UrbanEV/data/
+data/UrbanEV/data/*
+!data/UrbanEV/data/inf.csv
+!data/UrbanEV/data/occupancy.csv
+!data/UrbanEV/data/distance.csv
+!data/UrbanEV/data/s_price.csv
+!data/UrbanEV/data/e_price.csv
+!data/UrbanEV/data/volume-11kW.csv

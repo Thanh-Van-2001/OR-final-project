@@ -1,0 +1,431 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,booktabs,graphicx,xcolor,array,multirow,float}
+\usepackage[inline]{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage[font=small,labelfont=bf]{caption}
+\setlength{\parskip}{4pt}\setlength{\parindent}{0pt}
+\newtheorem{proposition}{Proposition}
+\newcommand{\TODO}[1]{\textcolor{red}{[#1]}}
+\newcommand{\fig}[1]{../../figures/#1}
+
+\begin{document}
+\begin{titlepage}\centering
+\vspace*{2cm}
+{\large Operations Research 76000093 --- Final Project Report}\\[1.2cm]
+{\Huge\bfseries Right Place, Right Time}\\[0.4cm]
+{\LARGE Capacity, Guidance and Pricing for\\[2pt] Public EV Charging in Shenzhen}\\[1.5cm]
+{\large Nguyen Van Thanh\\ \TODO{Member 2} \quad \TODO{Member 3} \quad \TODO{Member 4} \quad \TODO{Member 5}}\\[1.5cm]
+\includegraphics[width=0.8\linewidth]{\fig{m1_map_pwait.png}}\\[1cm]
+{\large \TODO{Submission date}}
+\end{titlepage}
+
+\begin{abstract}
+Shenzhen's public charging network (17{,}532 piles in 275 traffic zones) is, on average, lightly used: 28\% occupancy over Sep 2022--Feb 2023. Yet on busy days it saturates locally, and with a doubling of charging demand an M/M/$c$ analysis shows 48 zones whose queues become unstable while network-wide occupancy would still be only 56\%. The piles are in the wrong places and used at the wrong times. Using the open UrbanEV dataset, we build five complementary operations research models, one per team member:
+\begin{enumerate*}[label=(\arabic*)]
+\item an Erlang-C queueing diagnosis;
+\item a budget-constrained MILP for expansion and relocation;
+\item a min-cost-flow model for navigation guidance;
+\item a revenue-neutral time-of-use pricing NLP with a price sensitivity estimated from the data;
+\item a discrete-event simulation with driver spill-over optimised by simulated annealing.
+\end{enumerate*}
+Under doubled demand, relocating idle piles is decisive: at a budget of 1{,}000 new-pile units, the optimal mix reduces waiting from 952 driver-hours/day (new piles only) to 5.0, and a naive proportional rule leaves 41 zones unstable. Guidance within 3\,km cuts the piles needed for stability from 598 to 185. Pricing alone cuts them to 403, but it hardly changes \emph{which} zones fail. Combined, pricing and guidance reduce the budget needed for an average wait below 15\,s per driver by 70--77\%. Simulation shows that the stationary Erlang model is conservative. When drivers spill over to neighbouring zones, a simulation-based search improves on the Erlang-optimal allocation by 34\% ($\pm$8\%, out of sample). We recommend a portfolio: guidance first, relocation second, a moderate time-of-use fee, and new piles only where these cannot reach.
+\end{abstract}
+\tableofcontents
+\newpage
+
+%==================================================================
+\section{Introduction}
+\subsection{Background and motivation}
+Shenzhen is one of the world's most electrified cities. By June 2024 it had 1.08 million new-energy vehicles (NEVs), more than 25\% of its 4.26 million vehicles~\cite{cnev2024}. Nationally, the NEV stock grew from 24.72 million (June 2024) to 36.89 million (June 2025), i.e.\ by 49\% in one year~\cite{cnev2025}. Public charging is essential for drivers without home charging (taxis, ride-hailing drivers and many apartment residents). When public charging is short, the cost is waiting time and, eventually, lost trust in electrification.
+
+A charging network can fail in two ways. Piles in the \emph{wrong places} leave drivers queueing in one district while piles stand idle in the next. Piles used at the \emph{wrong times} sit empty all afternoon and saturate at night. Both failures are visible in the open UrbanEV dataset~\cite{li2025urbanev}, which records the hourly occupancy, charging duration, energy and prices of all public piles in 275 traffic zones of Shenzhen for six months (Section~\ref{sec:data}).
+
+\subsection{Objectives and research questions}
+\textbf{Objective:} keep driver waiting time low as charging demand grows, at the lowest investment. The decision makers are the city's transport and energy planners and the charging operators. They have four levers of very different cost: new piles, relocation of idle piles, navigation guidance, and time-of-use (TOU) service fees. We ask five research questions and answer each with a different method from the course:
+\begin{enumerate}[label=\textbf{RQ\arabic*},leftmargin=2.8em,itemsep=1pt]
+\item How long do drivers wait in each zone and hour, and which zones fail first as demand grows? (M1, queueing theory)
+\item Given a budget, where should new piles be installed and idle piles relocated? (M2, integer programming)
+\item How much overload can guidance absorb without building anything? (M3, network optimisation)
+\item Which revenue-neutral TOU fee best shifts charging away from congested hours? (M4, nonlinear programming)
+\item Do the analytical models hold under time-varying demand and driver spill-over, and can simulation-optimisation do better? (M5, simulation and metaheuristics)
+\end{enumerate}
+
+\subsection{Contributions}
+\begin{itemize}[leftmargin=1.3em,itemsep=1pt]
+\item A reproducible, data-driven OR pipeline on a real city-scale dataset. All code and results are in the accompanying ZIP file.
+\item An exact incremental MILP for joint expansion and relocation, with a duality-based reading of diminishing returns and a break-even relocation cost.
+\item A way to compare levers of different nature (price, software, hardware) on one yardstick: the budget needed to meet a waiting-time target.
+\item An empirical estimate of drivers' price sensitivity from cross-zone TOU variation.
+\item A verified simulation showing when the textbook Erlang model is conservative and when interactions between zones matter.
+\end{itemize}
+
+%==================================================================
+\section{Literature Review}\label{sec:lit}
+Table~\ref{tab:lit} summarises the ten papers we reviewed; the discussion below gives our critique and how each paper informs our work.
+
+\begin{table}[H]\centering\footnotesize
+\caption{Summary of the literature reviewed}\label{tab:lit}
+\begin{tabular}{@{}p{2.6cm}p{2.7cm}p{4.6cm}p{4.9cm}@{}}\toprule
+Paper & Problem & Method & Relevance / gap for us\\\midrule
+Hodgson 1990~\cite{hodgson1990} & flow-capturing location & MIP maximising flows passing a facility & demand as flows; no capacity or queueing\\
+Kuby \& Lim 2005~\cite{kuby2005} & refuelling location with range & MIP with path/range constraints & intercity routing view; uncapacitated\\
+He et al.\ 2013~\cite{he2013} & public charging allocation & equilibrium model, MPCC, active-set algorithm & rich behaviour; hard to scale, no queues\\
+Jung et al.\ 2014~\cite{jung2014} & e-taxi charger siting with queue delay & bi-level simulation-optimisation & queues + simulation; small fleet (600 taxis, Seoul)\\
+Yang et al.\ 2017~\cite{yang2017} & e-taxi charger siting and sizing & M/M/$x$/$s$ + regression-linearised ILP (Changsha GPS data) & closest to our M1+M2; ignores relocation, pricing, guidance\\
+Green et al.\ 2001~\cite{green2001} & staffing with cyclic demand & SIPP and its modifications & SIPP can mis-size; motivates our M5 check\\
+Fox 1966~\cite{fox1966} & separable resource allocation & marginal analysis (greedy) & justifies exactness of our incremental MILP\\
+Li et al.\ 2025~\cite{li2025urbanev} & UrbanEV dataset & data collection and cleaning, prediction benchmarks & our data source; prediction, not decisions\\
+Kuang et al.\ 2024~\cite{kuang2024} & price effect on charging (Shenzhen) & empirical analysis of price and charging behaviour & shows price matters; we turn it into a design NLP\\
+Qu et al.\ 2024~\cite{qu2024} & regional demand prediction & physics-informed graph learning & forecasting inputs; no optimisation\\\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Location models.} Hodgson's flow-capturing model~\cite{hodgson1990} and the flow-refuelling extension of Kuby and Lim~\cite{kuby2005} established that alternative-fuel demand is best seen as flows along paths, not as points. Their limitation for an urban network is that facilities are uncapacitated: a captured flow is served however many vehicles arrive. In Shenzhen, where most zones already have chargers, the binding issue is capacity and congestion, which these models do not represent. We therefore keep the zone as the unit and model capacity explicitly through queues.
+
+\textbf{Equilibrium and behavioural models.} He et al.~\cite{he2013} couple route and destination choice with the power network and optimise the allocation of stations as a mathematical program with complementarity constraints. The model is behaviourally rich but computationally heavy, and it does not include waiting time. Our logit time-choice model (M4) keeps the behavioural element, driver response to price, in a tractable form.
+
+\textbf{Queueing-aware charger planning.} Jung et al.~\cite{jung2014} embed queue delay in charger siting for electric taxis with a bi-level simulation-optimisation, validated on a 600-vehicle fleet. Yang et al.~\cite{yang2017} use an M/M/$x$/$s$ queue and linearise the charging probability by regression to obtain an ILP, applied to GPS data from Changsha. Their approach is the closest to our M1+M2. We improve on it in three ways. First, our waiting-time function is linearised \emph{exactly}, without regression, using convexity and 0-1 increments (Proposition~\ref{prop:exact}). Second, we add relocation of existing piles, which turns out to be the dominant lever. Third, we add non-infrastructure levers (guidance, pricing).
+
+\textbf{Time-varying demand.} Green et al.~\cite{green2001} show that the widely used stationary independent period-by-period (SIPP) approach can fail to meet delay targets when demand is cyclic. Our M1 is a SIPP model, so M5 checks it by simulation. Fox's marginal analysis~\cite{fox1966} shows that greedy allocation is optimal for separable concave (convex-cost) problems with one resource. It underpins the exactness of our incremental MILP and our Erlang-greedy benchmark in M5.
+
+\textbf{Data-driven studies of Shenzhen.} UrbanEV~\cite{li2025urbanev} and its companion papers focus on demand \emph{prediction}~\cite{qu2024} and on the empirical effect of price on charging behaviour~\cite{kuang2024}. Their contribution is descriptive and predictive. We use the same data for \emph{prescriptive} analysis: where to put capacity, how to route drivers and how to price.
+
+\textbf{Gap addressed.} No paper we reviewed compares hardware (new or relocated piles), software (guidance) and price levers on the same yardstick, on city-scale real data, and checks the analytical queueing model against a simulation with zone interactions. This project fills that gap.
+
+%==================================================================
+\section{Data and Problem Definition}\label{sec:data}
+\subsection{The UrbanEV dataset}
+UrbanEV~\cite{li2025urbanev} (CC0 licence) contains zone-level hourly data from 2022-09-01 to 2023-02-28 (4{,}344 hours) for 275 traffic analysis zones (TAZ) with 1{,}362 public stations and 17{,}532 piles. We use:
+\begin{itemize}[leftmargin=1.3em,itemsep=1pt]
+\item the number of piles per zone, summed from the station inventory \texttt{inf.csv} (median 48, range 4--373);
+\item hourly occupancy, i.e.\ the number of busy or unavailable piles (\texttt{occupancy.csv}). Although the file header says ``\%'', the values are counts: their ratio to the pile count never exceeds 1;
+\item hourly electricity price and service fee (yuan/kWh);
+\item the zone-to-zone distance matrix (converted to km).
+\end{itemize}
+Figure~\ref{fig:util} shows the average daily pattern. Utilisation is highest at night (0--6\,h, when electricity is cheapest; taxis and ride-hailing vehicles charge then) and lowest in the afternoon. The network average is only 28\%, but the busiest zone is above 75\% at every hour.
+
+\begin{figure}[H]\centering\includegraphics[width=0.75\linewidth]{\fig{m1_hourly_util.png}}
+\caption{Observed pile utilisation by hour of day (occupancy / piles).}\label{fig:util}\end{figure}
+
+\subsection{Demand estimation, censoring and growth scenarios}
+We take the offered load of zone $z$ in hour $h$, $a_{zh}$ (in Erlangs, i.e.\ expected busy piles), as the average occupancy in that hour of the day over the six months. Two issues must be handled:
+\begin{itemize}[leftmargin=1.3em,itemsep=1pt]
+\item \textbf{Censoring.} Occupancy cannot exceed the number of piles. On the busiest 10\% of days, 10 zones are fully occupied at their peak hour, so their true demand is unknown (at least $c$). The mean day is not censored (0 saturated zones), so we use it as the baseline. Busy-day variability is analysed by simulation (M5).
+\item \textbf{Growth.} The data predate the rapid growth of 2023--2025 (+49\% national NEV stock in one year to June 2025~\cite{cnev2025}). We therefore scale demand by a factor $g \in \{1, 1.5, 2, 2.5\}$ and use $g = 2$ (a 2026--27 planning horizon) as the base scenario. All models are run for several values of $g$.
+\end{itemize}
+
+\subsection{Assumptions}
+\begin{enumerate}[label=A\arabic*,leftmargin=2.2em,itemsep=1pt]
+\item Within a zone (median area a few km$^2$), drivers use any free pile: each zone is one pooled $c$-server queue.
+\item Arrivals within an hour are Poisson; sessions have mean $\tau$ (1\,h). Total waiting time turns out not to depend on $\tau$ (Proposition~\ref{prop:tau}), so $\tau$ does not affect any planning decision.
+\item Demand growth scales all zones and hours by $g$ (spatial pattern preserved). Pricing changes \emph{when} people charge, not \emph{how much}: daily demand is conserved.
+\item Costs are expressed in new-pile units: a new pile costs 1 and relocating an existing pile costs $\kappa = 0.35$. Sensitivity is reported for $\kappa \in [0.1, 1]$.
+\item Guidance can redirect drivers to zones within $D_{\max}$\,km with spare capacity below a target utilisation $\rho^* = 0.85$.
+\end{enumerate}
+
+\subsection{Notation}
+$\mathcal Z$: zones; $c_z$: piles; $a_{zh}$: offered load (Erlangs); $\lambda_{zh} = a_{zh}/\tau$: arrival rate; $C(c, a)$: Erlang-C probability of waiting; $W_z(c)$: expected total driver waiting hours per day in zone $z$ with $c$ piles; $d_{ij}$: distance (km); $B$: budget; $\kappa$: relocation cost; $p_h$: service fee in hour $h$.
+
+%==================================================================
+\section{M1 --- Queueing Theory: Diagnosing the Network}\label{sec:m1}
+\subsection{Model}
+Each zone--hour is an M/M/$c$ queue. With offered load $a < c$,
+\[
+C(c,a) = \frac{c\,B(c,a)}{c - a\,(1 - B(c,a))},\qquad
+W_q = \frac{C(c,a)\,\tau}{c-a},\qquad
+W_z(c) = \sum_{h=0}^{23} \lambda_{zh} W_{q,zh},
+\]
+where $B(c,a)$ is Erlang-B, computed with the numerically stable recursion $B_k = aB_{k-1}/(k + aB_{k-1})$, which remains accurate for zones with up to 373 piles. The implementation was checked against textbook values ($C(2,1.6) = 0.7111$).
+
+\begin{proposition}[$\tau$-invariance]\label{prop:tau}
+The total waiting time $W_z(c)$ does not depend on the mean session length $\tau$.
+\end{proposition}
+\begin{proof}
+$\lambda W_q = \frac{a}{\tau}\cdot\frac{C(c,a)\tau}{c-a} = \frac{a\,C(c,a)}{c-a}$, which depends only on $a$ and $c$.
+\end{proof}
+Since every model below uses $W_z$ (or $C$), the unknown $\tau$ affects the waiting time \emph{per driver} ($\propto\tau$) but none of the allocation, routing or pricing decisions. We confirmed this numerically for $\tau \in \{0.5, 1, 2\}$\,h.
+
+\subsection{Results}
+\begin{table}[H]\centering\small
+\caption{Network diagnosis with current piles (mean-day demand scaled by $g$)}\label{tab:m1}
+\begin{tabular}{@{}lrrrr@{}}\toprule
+ & $g=1$ & $g=1.5$ & $g=2$ & $g=2.5$\\\midrule
+network average utilisation & 28\% & 42\% & 56\% & 70\%\\
+zones with unstable queues ($\max_h a_{zh} \ge c_z$) & 0 & 13 & 48 & 91\\
+zones with $P(\text{wait}) > 0.5$ at their peak & 0 & 22 & 61 & 104\\
+zones with peak utilisation $> 0.85$ & 1 & 29 & 80 & 115\\
+waiting in stable zones (driver-h/day) & 97 & 2{,}066 & 2{,}366 & 3{,}241\\\bottomrule
+\end{tabular}
+\end{table}
+Table~\ref{tab:m1} and the title-page map show the core finding. Today the network works: 97 driver-hours of waiting per day, over about 118{,}000 daily sessions if a session lasts 1\,h on average. With doubled demand, however, 48 zones become unstable while more than 40\% of all piles would still be idle on average. The failures are concentrated in the north-west (Bao'an) and in the north-east, where piles are few relative to demand, while the central south has spare capacity. This \emph{spatial mismatch} is what M2 and M3 address. The \emph{temporal} mismatch (Fig.~\ref{fig:util}) is addressed by M4.
+
+%==================================================================
+\section{M2 --- Integer Programming: Expansion and Relocation}\label{sec:m2}
+\subsection{Formulation}
+Let $u_z$ be the number of piles added to zone $z$ (new or relocated in) and $v_z$ the number removed (relocated out). $N^{\text{new}}$ and $N^{\text{rel}}$ are the numbers of new and relocated piles.
+\begin{align}
+\min\ & \sum_{z} W_z(c_z + u_z - v_z) \label{eq:m2obj}\\
+\text{s.t.}\ & \textstyle\sum_z u_z = N^{\text{new}} + N^{\text{rel}},\qquad \sum_z v_z = N^{\text{rel}} \\
+& N^{\text{new}} + \kappa N^{\text{rel}} \le B \\
+& c_z + u_z - v_z \ge s_z := \lfloor \max_h a_{zh}\rfloor + 1 \quad\forall z \quad\text{(stability)}\\
+& v_z \le \lfloor c_z/2 \rfloor,\quad u_z, v_z, N^{\text{new}}, N^{\text{rel}} \in \mathbb Z_{\ge 0}.
+\end{align}
+\textbf{Exact linearisation.} Define the marginal gains $\delta^+_{zk} = W_z(c_z+k-1) - W_z(c_z+k)$ and marginal losses $\delta^-_{zk} = W_z(c_z-k) - W_z(c_z-k+1)$, and write $u_z = \sum_k x_{zk}$, $v_z = \sum_k y_{zk}$ with binaries $x_{zk}, y_{zk}$. The objective becomes $\sum_z W_z(c_z) - \sum_{z,k}\delta^+_{zk}x_{zk} + \sum_{z,k}\delta^-_{zk}y_{zk}$ (with forced increments for zones that need them for stability).
+
+\begin{proposition}\label{prop:exact}
+If $W_z$ is convex and decreasing in $c$ on the stable range, the incremental formulation is exact: some optimal solution uses the increments in order ($x_{z1}\ge x_{z2}\ge\dots$, $y_{z1}\ge y_{z2}\ge\dots$), so it represents $W_z(c_z+u_z-v_z)$ exactly.
+\end{proposition}
+\begin{proof}[Proof sketch]
+Convexity implies $\delta^+_{z1}\ge\delta^+_{z2}\ge\cdots$ and $\delta^-_{z1}\le\delta^-_{z2}\le\cdots$. Any solution that uses a later increment but skips an earlier one of the same zone can swap them. The swap uses the same budget and piles and does not worsen the objective.
+\end{proof}
+The M/M/$c$ waiting time is convex in $c$ (a classical result). We also verified numerically that every one of the 275 zone curves is decreasing and convex on its stable range, for $g = 1.5$, 2 and 2.5. This is Fox's marginal-analysis structure~\cite{fox1966} with two coupled resources. After increments with a marginal gain below $10^{-4}$\,h/day are pruned, the model has about 8{,}400 binaries and is solved by HiGHS (\texttt{scipy.optimize.milp}) to a relative gap of $10^{-6}$ in seconds. The LP relaxation is almost integral (gap 0.003\,h), as expected from the structure.
+
+\subsection{Results (base scenario $g = 2$, $\kappa = 0.35$)}
+\begin{itemize}[leftmargin=1.3em,itemsep=1pt]
+\item \textbf{Stability.} 598 piles must be added to 48 zones to stabilise the network. Relocation makes this cheap: the minimum cost is 209 units (598 relocations), against 598 units with new piles only.
+\item \textbf{Budget curve} (Table~\ref{tab:m2}, Fig.~\ref{fig:m2}). At every budget the optimal mix beats ``new only'' by one to three orders of magnitude. At $B = 1000$ it uses 151 new and 2{,}425 relocated piles, spread over 128 receiving and 137 donating zones (Fig.~\ref{fig:m2}, right), and leaves only 5.0 driver-hours of waiting per day. With new piles only, waiting is 952 driver-hours per day.
+\item \textbf{Naive benchmark.} Adding new piles in proportion to the current pile count, the common ``fair share'' rule, leaves 41 zones unstable even at $B = 1000$ (27 at $B = 3000$).
+\item \textbf{Relocation alone} saturates at 6.6 driver-hours per day, because donors can give at most half of their piles. Between $B = 800$ and $B = 1000$, new piles start to enter the optimal mix.
+\end{itemize}
+\begin{table}[H]\centering\small
+\caption{Total waiting (driver-hours/day) vs budget, $g=2$ (``--'': infeasible, cannot stabilise)}\label{tab:m2}
+\begin{tabular}{@{}lrrrrrrr@{}}\toprule
+Budget $B$ & 250 & 400 & 600 & 800 & 1000 & 1500 & 2000\\\midrule
+MILP new + relocation & 4{,}720 & 536 & 69.9 & 10.3 & 4.97 & 1.48 & 0.42\\
+MILP new piles only & -- & -- & 28{,}256 & 2{,}589 & 952 & 147 & 25.8\\
+MILP relocation only & 4{,}720 & 536 & 69.9 & 10.3 & 6.56 & 6.56 & 6.56\\
+proportional rule: unstable zones & 46 & 46 & 46 & 42 & 41 & 35 & 32\\\bottomrule
+\end{tabular}
+\end{table}
+\begin{figure}[H]\centering
+\includegraphics[width=0.52\linewidth]{\fig{m2_budget_curve.png}}\hfill
+\includegraphics[width=0.46\linewidth]{\fig{m2_plan_map.png}}
+\caption{Left: waiting vs budget (log scale). Right: optimal plan at $B=1000$ (orange: receiving zones, blue: donating zones; marker size is the number of piles moved).}\label{fig:m2}\end{figure}
+
+\subsection{Duality and sensitivity analysis}
+\textbf{Shadow price of the budget.} The dual value of the budget constraint in the LP relaxation measures the waiting saved by one more budget unit:
+\begin{center}\small
+\begin{tabular}{@{}lrrrrrrr@{}}\toprule
+$B$ & 250 & 300 & 400 & 500 & 600 & 800 & 1000\\\midrule
+shadow price (driver-h/day per unit) & 105.1 & 28.3 & 5.96 & 1.90 & 0.69 & 0.08 & 0.012\\\bottomrule
+\end{tabular}\end{center}
+Returns diminish very steeply. The first units, spent on relocation to the worst zones, save 100+ driver-hours/day each, whereas beyond $B \approx 600$ an extra unit saves under one hour. This gives planners a rational stopping rule: stop investing when the shadow price falls below the value of an hour of drivers' time divided by the cost of a unit.
+
+\textbf{Relocation cost $\kappa$} ($B = 1000$):
+\begin{center}\small
+\begin{tabular}{@{}lrrrrrr@{}}\toprule
+$\kappa$ & 0.10 & 0.20 & 0.35 & 0.50 & 0.75 & 1.00\\\midrule
+waiting (driver-h/day) & 1.33 & 2.19 & 4.97 & 26.0 & 264 & 952\\
+new / relocated piles & 780 / 2{,}193 & 544 / 2{,}277 & 151 / 2{,}425 & 0 / 2{,}000 & 1 / 1{,}332 & 1{,}000 / 0\\\bottomrule
+\end{tabular}\end{center}
+At $\kappa \ge 0.5$ the optimum uses no new piles at this budget. Relocation remains worthwhile until $\kappa = 1$, where the two options cost the same and relocation only loses donor capacity. The recommendation to relocate first therefore holds unless moving a pile costs almost as much as a new one.
+
+\textbf{Demand growth.} The number of piles needed for stability grows much faster than demand: 61 at $g = 1.5$, 598 at $g = 2$ and 1{,}931 at $g = 2.5$. The donor pool shrinks at the same time (6{,}908 $\to$ 3{,}565 removable piles). Relocation is thus a medium-term fix; beyond $g \approx 2.5$, new capacity becomes unavoidable.
+
+%==================================================================
+\section{M3 --- Network Optimisation: Navigation Guidance}\label{sec:m3}
+\subsection{Formulation}
+For each hour, an overloaded zone $i$ has excess $e_i = \max(0, a_i - \rho^* c_i)$ and a zone $j$ has spare capacity $s_j = \max(0, \rho^* c_j - a_j)$. The guidance problem is a transportation (min-cost flow) problem on the bipartite network with arcs $i\to j$ for $d_{ij} \le D_{\max}$:
+\begin{align*}
+\min\ \sum_{(i,j)} d_{ij} f_{ij} + M\sum_i r_i\quad\text{s.t.}\quad \sum_j f_{ij} + r_i = e_i\ \ \forall i,\qquad \sum_i f_{ij} \le s_j\ \ \forall j,\qquad f, r \ge 0,
+\end{align*}
+where $r_i$ is the excess left unresolved (penalty $M$). The constraint matrix is totally unimodular, so integer data give integer flows. We solve it as an LP (HiGHS) and cross-check it with the network simplex method (\texttt{networkx}) on integer flows of 0.1 busy pile. At the peak hour (01:00, $D_{\max} = 3$\,km), the two give 748.1 and 745.3 Erlangs redirected; the difference is within the discretisation error.
+
+\subsection{Results}
+\begin{table}[H]\centering\small
+\caption{Guidance only (current piles), $g = 2$, summed over 24 hours}\label{tab:m3}
+\begin{tabular}{@{}lrrrrr@{}}\toprule
+$D_{\max}$ (km) & 1 & 2 & 3 & 5 & 8\\\midrule
+excess redirected & 10\% & 50\% & 70\% & 95\% & 99.6\%\\
+mean detour (km) & 0.76 & 1.43 & 1.71 & 2.24 & 2.41\\
+unstable zones after (48 before) & 44 & 27 & 17 & 4 & 1\\
+piles still needed for stability (598 before) & 561 & 319 & 185 & 32 & 3\\\bottomrule
+\end{tabular}
+\end{table}
+\begin{figure}[H]\centering
+\includegraphics[width=0.49\linewidth]{\fig{m3_guidance_curve.png}}\hfill
+\includegraphics[width=0.47\linewidth]{\fig{m3_flows_map.png}}
+\caption{Left: share of the excess redirected and unstable zones vs detour limit. Right: optimal flows at the peak hour, $D_{\max}=3$\,km.}\label{fig:m3}\end{figure}
+Guidance is powerful because excess and spare capacity are close to each other. With a 3-km limit (mean detour 1.7\,km, about 5 minutes of driving), 70\% of the excess can be absorbed, and the piles needed for stability fall from 598 to 185 (\textminus 69\%). With 5\,km, only 32 piles are needed. The \textbf{duals} of the capacity constraints identify where extra capacity is most valuable: at the peak hour, 39 of the 206 receiving zones have binding capacity. These zones are the natural targets for the M2 investment, which links the two models.
+
+%==================================================================
+\section{M4 --- Nonlinear Programming: Time-of-Use Service Fees}\label{sec:m4}
+\subsection{Demand response model and estimation}
+Drivers choose their charging hour by a multinomial logit on the total price (electricity $e_h$ + service fee $p_h$):
+\[
+s_h(p) = \frac{w_h\,e^{-\beta(e_h+p_h)}}{\sum_k w_k\,e^{-\beta(e_k+p_k)}},\qquad a_{zh}(p) = a_{zh}^0\,\frac{s_h(p)}{s_h(p^0)},
+\]
+where the weights $w_h$ are calibrated so that current prices reproduce the observed hourly shares. Daily demand is conserved (Assumption A3).
+
+\textbf{Estimating $\beta$ from the data.} 118 zones have time-varying prices and 157 have flat prices. For each TOU zone, we regress the log ratio of its hourly share to the flat zones' share on its hourly price deviation, with zone fixed effects and zone-clustered standard errors. The flat zones control for the common daily rhythm. The estimate is $\hat\beta = 0.281$ per yuan/kWh (s.e.\ 0.127, $t = -2.21$), i.e.\ an hour-share price elasticity of about $-0.44$ at the mean total price of 1.62 yuan/kWh. \emph{Caveat:} identification is weak (median within-zone price spread is only 0.088 yuan) and the service-fee and electricity components give opposite signs when estimated separately. We therefore report results for $\beta \in [0.1, 1]$.
+
+\subsection{NLP formulation and KKT conditions}
+\begin{align*}
+\text{(A) congestion-aware:}\quad &\min_{p}\ F_A(p) = \sum_{z,h}\big[\max(0,\ a_{zh}(p) - \rho^* c_z)\big]^2\\
+\text{(B) load flattening:}\quad &\min_{p}\ F_B(p) = \sum_h \Big(\sum_z a_{zh}(p)\Big)^2\\
+\text{s.t.}\quad & R(p) := \sum_h p_h\,s_h(p) = R^0\ \ \text{(revenue neutrality)},\qquad p^{\min}\le p_h \le p^{\max}.
+\end{align*}
+The Lagrangian is $L = F(p) + \mu\,(R(p) - R^0) - \sum_h \underline{\nu}_h (p_h - p^{\min}) + \sum_h \overline{\nu}_h(p_h - p^{\max})$. The KKT conditions are $\nabla F + \mu\nabla R - \underline\nu + \overline\nu = 0$, complementary slackness, and $\underline\nu, \overline\nu \ge 0$. We solve the problem with trust-constr, which returns the multipliers, and cross-check with SLSQP. The objective values agree to $10^{-7}$ (relative), and the KKT stationarity residual on the free variables is below $10^{-7}$.
+
+\textbf{A modelling lesson (degenerate optimum).} Our first version required revenue $R(p) \ge R^0$. Because daily demand is conserved in the logit model, the operator could raise \emph{all} fees without losing any demand: the revenue constraint was never binding ($\mu = 0$) and fees drifted to the upper bound. This is an artefact of the model, not a meaningful optimum. The revenue-neutral equality fixes it: it keeps the average fee and only re-times it. This is also the policy-relevant question for a regulator.
+
+\subsection{Results ($g=2$, $\hat\beta = 0.281$)}
+\begin{table}[H]\centering\small
+\caption{Effect of revenue-neutral TOU fees (current piles, $g=2$)}\label{tab:m4}
+\begin{tabular}{@{}lrrrr@{}}\toprule
+ & current fee & (A) wide $[0.2,1.5]$ & (A) moderate $[0.5,1.0]$ & (B) wide\\\midrule
+congestion index $F_A$ & 255{,}499 & 129{,}371 & 176{,}979 & 133{,}781\\
+network peak / mean load & 1.19 & 1.08 & 1.12 & 1.01\\
+unstable zones & 48 & 45 & 45 & 44\\
+piles needed for stability & 598 & 403 & 467 & 418\\
+multiplier $\mu$ of revenue constraint & -- & 0.191 & -- & 0.004\\\bottomrule
+\end{tabular}
+\end{table}
+\begin{figure}[H]\centering\includegraphics[width=0.95\linewidth]{\fig{m4_pricing.png}}
+\caption{Optimal fee profiles (left) and resulting network utilisation (right).}\label{fig:m4}\end{figure}
+The optimal congestion-aware fee is high at night (the congested hours) and low from 8:00 to 20:00. It halves the congestion index and cuts the piles needed for stability by a third (598 $\to$ 403), with the same average fee. The multiplier $\mu = 0.19$ measures how much the (scaled) congestion objective would improve if the operator gave up one unit of average fee revenue: a quantified trade-off between revenue and congestion. The load-flattening objective (B) produces an almost flat network load (peak/mean 1.01) but helps the congested zones less, because a flat \emph{total} load is not the same as uncongested \emph{zones}. \textbf{Key insight:} pricing hardly changes \emph{which} zones fail (48 $\to$ 45). Price is a temporal instrument, while Shenzhen's main problem is spatial, so pricing complements relocation and guidance but cannot replace them. The conclusions are robust to $\beta$: piles needed for stability are 472 at $\beta = 0.1$ and 403 for $\beta \ge 0.28$, where the fee bounds become binding.
+
+%==================================================================
+\section{M5 --- Simulation and Simulated Annealing}\label{sec:m5}
+\subsection{Discrete-event simulation}
+We simulate a 30-zone cluster around the most overloaded zone (TAZ 633), with demand $g = 2$ and hourly-varying Poisson arrivals (generated by thinning). Session lengths are log-normal with mean 1\,h and coefficient of variation 0.8. A driver who finds no free pile and at least 3 drivers already queueing \emph{diverts} to the nearest zone within 3\,km that has a free pile, and incurs the detour. Otherwise the driver joins a FIFO queue. The objective is $J$ = waiting hours/day + 0.05\,h/km $\times$ detour km/day (3 minutes per km). Each run covers 4 days after 1 warm-up day, with about 88{,}000 arrivals.
+
+\textbf{Verification.} With stationary arrivals, exponential sessions and no diversion, the simulation must reproduce Erlang-C. It does (60 days $\times$ 8 replications):
+\begin{center}\small
+\begin{tabular}{@{}lrrr@{}}\toprule
+$(c, a)$ & (5, 4) & (20, 17) & (50, 45)\\\midrule
+Erlang-C $W_q$ (min) & 33.25 & 7.70 & 4.37\\
+simulation $W_q$ (min) $\pm$ s.e. & 34.25 $\pm$ 2.96 & 7.75 $\pm$ 0.49 & 4.39 $\pm$ 0.16\\\bottomrule
+\end{tabular}\end{center}
+
+\textbf{How good is the analytical (SIPP) model?} For the Erlang-greedy plan, the stationary Erlang model predicts 203 waiting hours/day, whereas the simulation (time-varying arrivals, session CV 0.8, no diversion) gives 95. The analytical model is \emph{conservative} here, mainly because real sessions are less variable than exponential ones. Plans based on M1/M2 therefore err on the safe side.
+
+\subsection{Simulation-optimisation by simulated annealing}
+\noindent\fbox{\parbox{\dimexpr\linewidth-2\fboxsep}{\small\textbf{Algorithm: simulated annealing over pile allocations (common random numbers)}
+\begin{enumerate}[leftmargin=1.6em,itemsep=0pt,topsep=2pt]
+\item $x \gets$ Erlang-greedy allocation of $B = 174$ new piles (134 needed for stability + 40); $T \gets 0.05\,J(x)$.
+\item For $t = 1,\dots,250$: pick zones $i \ne j$ with $x_i > 0$; let $x'$ be $x$ with one pile moved from $i$ to $j$; compute $\Delta = J(x') - J(x)$ on two CRN replications; accept $x \gets x'$ if $\Delta < 0$ or with probability $e^{-\Delta/T}$; keep the best solution; set $T \gets 0.985\,T$.
+\item Re-evaluate the best $x$ and the Erlang-greedy plan on 10 \emph{fresh} replications (out of sample).
+\end{enumerate}}}
+\begin{table}[H]\centering\small
+\caption{Out-of-sample comparison (10 fresh replications)}\label{tab:m5}
+\begin{tabular}{@{}lrrrr@{}}\toprule
+plan & $J$ (h/day) & waiting (h/day) & detour (km/day) & diversions/day\\\midrule
+Erlang-greedy (M2 logic) & 46.8 & 41.5 & 106.7 & 63.6\\
+simulated annealing & 31.0 & 23.6 & 147.8 & 88.2\\\bottomrule
+\end{tabular}
+\end{table}
+\begin{figure}[H]\centering\includegraphics[width=0.62\linewidth]{\fig{m5_sa_convergence.png}}
+\caption{SA convergence on the 30-zone cluster.}\label{fig:m5}\end{figure}
+Simulated annealing reduces $J$ by 15.8 $\pm$ 3.6\,h/day (95\% CI, paired), i.e.\ by \textbf{33.8\%}, by moving only 21 of the 174 piles. It does so by \emph{exploiting spill-over}: it places piles where they also serve drivers diverted from neighbouring zones. Waiting falls by 43\% at the cost of 39\% more detours. The separable Erlang model cannot see this interaction. The lesson for M2 is that the MILP is the right tool at city scale, and a simulation-based refinement is valuable for dense clusters.
+
+%==================================================================
+\section{Integrated Policy Analysis}\label{sec:integrated}
+We now combine the levers on one yardstick: the minimum MILP budget (new = 1, relocation = 0.35) that brings the average wait below \textbf{15 seconds per driver}, found by bisection on $B$ with the M2 model, applied after pricing (M4-A, wide range) and/or 3-km guidance (M3).
+\begin{table}[H]\centering\small
+\caption{Minimum budget to meet the waiting target, by policy and demand growth}\label{tab:int}
+\begin{tabular}{@{}llrrr@{}}\toprule
+growth & policy & unstable zones & piles needed for stability & min budget\\\midrule
+\multirow{4}{*}{$g=1.5$} & none & 13 & 61 & 41.0\\
+ & pricing & 10 & 40 & 20.9\\
+ & guidance 3 km & 3 & 18 & 10.6\\
+ & pricing + guidance & 3 & 20 & 10.6\\\midrule
+\multirow{4}{*}{$g=2$} & none & 48 & 598 & 347.9\\
+ & pricing & 45 & 403 & 226.0\\
+ & guidance 3 km & 17 & 185 & 138.1\\
+ & pricing + guidance & 12 & 107 & \textbf{80.9}\\\midrule
+\multirow{4}{*}{$g=2.5$} & none & 91 & 1{,}931 & 1{,}266.4\\
+ & pricing & 87 & 1{,}467 & 744.1\\
+ & guidance 3 km & 46 & 1{,}144 & 857.3\\
+ & pricing + guidance & 32 & 568 & \textbf{349.7}\\\bottomrule
+\end{tabular}
+\end{table}
+\begin{figure}[H]\centering\includegraphics[width=0.7\linewidth]{\fig{integrated_budget.png}}
+\caption{Budget needed to meet the waiting target under each policy.}\label{fig:int}\end{figure}
+\begin{itemize}[leftmargin=1.3em,itemsep=1pt]
+\item \textbf{Soft levers first.} Pricing + guidance cut the required budget by 77\% at $g = 2$ (348 $\to$ 81) and by 72\% at $g = 2.5$ (1{,}266 $\to$ 350).
+\item \textbf{The levers are complements.} At high growth, pricing + guidance does much better than either alone (350 vs 744 and 857), because they attack different dimensions: time and space.
+\item \textbf{Robustness.} With moderate fees in $[0.5, 1.0]$ yuan/kWh, the $g = 2$ budget is 275 with pricing alone and 103 with pricing + guidance, still a 70\% saving.
+\end{itemize}
+
+%==================================================================
+\section{Recommendations}
+\begin{enumerate}[leftmargin=1.5em,itemsep=2pt]
+\item \textbf{Guidance first (software).} Integrate real-time pile availability into navigation and charging apps, and route drivers to free piles within about 3\,km. This alone removes about two thirds of the capacity shortfall under doubled demand, at almost no hardware cost.
+\item \textbf{Relocate before building.} Move idle piles from over-supplied central-south zones to the growing north-west and north-east, using the MILP plan (M2). Relocation remains optimal unless it costs about as much as a new pile.
+\item \textbf{A moderate, revenue-neutral time-of-use fee.} Raise night fees in congested zones and lower daytime fees, within the range already observed in Shenzhen. This cuts peak congestion without hurting operators' revenue.
+\item \textbf{Build new piles only where needed}, i.e.\ in the zones with binding capacity duals (M3) and positive shadow prices (M2), and stop when the shadow price falls below the value of drivers' time.
+\item \textbf{Refine dense clusters by simulation} (M5), where spill-over between neighbouring zones makes separable models suboptimal.
+\item \textbf{Monitor and re-plan yearly.} Required capacity grows much faster than demand (61 $\to$ 598 $\to$ 1{,}931 piles for $g = 1.5 \to 2 \to 2.5$), so the plan must be updated as the fleet grows.
+\end{enumerate}
+
+%==================================================================
+\section{Limitations and Potential Extensions}
+\begin{itemize}[leftmargin=1.3em,itemsep=1pt]
+\item \textbf{Censored and aggregated demand.} Observed occupancy is carried load. Unserved or deterred demand at saturated zones is invisible, so today's shortage is probably underestimated. Station-level 5-minute data (also published with UrbanEV) could support a proper censored-demand estimation.
+\item \textbf{Uniform growth.} Growth will not be spatially uniform. Zone-level forecasts, for example from graph neural networks~\cite{qu2024}, could replace the single factor $g$.
+\item \textbf{Price sensitivity.} Our $\beta$ is weakly identified. A field experiment or quasi-experimental tariff changes would sharpen it. Price-induced demand loss (not only shifting) could be added.
+\item \textbf{Grid constraints.} Pile relocation and night-time peaks interact with distribution-grid capacity. A joint charging-grid model is a natural extension, in the spirit of~\cite{he2013}.
+\item \textbf{Stochastic and robust planning.} Two-stage stochastic programming over growth scenarios, or robust optimisation over $\beta$, would hedge the decisions against uncertainty.
+\item \textbf{Joint optimisation.} Guidance, pricing and investment were combined sequentially. A single bilevel model (operator prices, drivers respond, planner invests) is a harder but more complete extension.
+\end{itemize}
+
+%==================================================================
+\section{Difficulties Encountered and How We Overcame Them}
+\begin{enumerate}[leftmargin=1.5em,itemsep=2pt]
+\item \textbf{Unknown session length $\tau$.} The data give busy piles but not session counts. We proved that total waiting time is $\tau$-invariant (Proposition~\ref{prop:tau}), which removed the problem for all planning decisions.
+\item \textbf{Censored demand.} On busy days, several zones are 100\% occupied. We used the uncensored mean day together with explicit growth scenarios, and checked day-to-day variability by simulation.
+\item \textbf{Mislabelled data.} \texttt{occupancy.csv} is documented in \%, but the values are counts. We verified this against pile counts (the ratio never exceeds 1) before using it.
+\item \textbf{Infinite waiting in unstable zones.} Unstable zones make the objective infinite. In M2 we added stability as a hard constraint. When comparing policies we replaced ``total waiting'', which mixes different sets of stable zones, with consistent metrics: unstable zones, piles needed, and budget to reach a target.
+\item \textbf{Degenerate pricing optimum.} The first NLP pushed all fees to the upper bound because demand is conserved. Diagnosing the zero multiplier led to the revenue-neutral formulation.
+\item \textbf{Scale.} A naive MILP with integer pile counts and nonlinear waiting is intractable. Using convexity (incremental 0-1 formulation) and pruning negligible increments, the model has about 8{,}400 binaries and solves in seconds. Vectorised Erlang recursions replaced millions of scalar evaluations.
+\item \textbf{Noisy simulation.} Early verification runs deviated from Erlang-C by two standard errors. Longer runs, more replications and counting actual arrivals brought all cases within 0.35 standard errors. Common random numbers made the SA comparisons meaningful.
+\end{enumerate}
+
+%==================================================================
+\section{Team Contributions}
+\begin{center}\small
+\begin{tabular}{@{}p{3.6cm}p{11.5cm}@{}}\toprule
+Member & Contribution\\\midrule
+\TODO{Member A} & M1 queueing model, data pipeline, demand estimation and growth scenarios; literature: \cite{green2001,li2025urbanev}\\
+\TODO{Member B} & M2 MILP, exactness proof, duality and sensitivity analysis; literature: \cite{fox1966,yang2017}\\
+\TODO{Member C} & M3 min-cost flow, network simplex cross-check; literature: \cite{hodgson1990,kuby2005}\\
+\TODO{Member D} & M4 price-sensitivity estimation, NLP, KKT analysis; literature: \cite{kuang2024,he2013}\\
+\TODO{Member E} & M5 simulation, verification, simulated annealing; literature: \cite{jung2014,qu2024}\\
+All & integrated policy analysis, recommendations, report and presentation\\\bottomrule
+\end{tabular}\end{center}
+
+\begin{thebibliography}{99}\small
+\bibitem{li2025urbanev} H.~Li, H.~Qu, X.~Tan, \emph{et al.}, ``UrbanEV: An open benchmark dataset for urban electric vehicle charging demand prediction,'' \emph{Scientific Data}, 2025. doi:10.1038/s41597-025-04874-4.
+\bibitem{kuang2024} H.~Kuang, X.~Zhang, H.~Qu, L.~You, R.~Zhu, J.~Li, ``Unravelling the effect of electricity price on electric vehicle charging behavior: A case study in Shenzhen, China,'' \emph{Sustainable Cities and Society}, 2024. doi:10.1016/j.scs.2024.105836.
+\bibitem{qu2024} H.~Qu, H.~Kuang, J.~Li, L.~You, ``A physics-informed and attention-based graph learning approach for regional electric vehicle charging demand prediction,'' \emph{IEEE Transactions on Intelligent Transportation Systems}, 2024.
+\bibitem{hodgson1990} M.~J.~Hodgson, ``A flow-capturing location-allocation model,'' \emph{Geographical Analysis}, 22(3):270--279, 1990. doi:10.1111/j.1538-4632.1990.tb00210.x.
+\bibitem{kuby2005} M.~Kuby, S.~Lim, ``The flow-refueling location problem for alternative-fuel vehicles,'' \emph{Socio-Economic Planning Sciences}, 39(2):125--145, 2005. doi:10.1016/j.seps.2004.03.001.
+\bibitem{he2013} F.~He, D.~Wu, Y.~Yin, Y.~Guan, ``Optimal deployment of public charging stations for plug-in hybrid electric vehicles,'' \emph{Transportation Research Part B}, 47:87--101, 2013.
+\bibitem{jung2014} J.~Jung, J.~Y.~J.~Chow, R.~Jayakrishnan, J.~Y.~Park, ``Stochastic dynamic itinerary interception refueling location problem with queue delay for electric taxi charging stations,'' \emph{Transportation Research Part C}, 40:123--142, 2014.
+\bibitem{yang2017} J.~Yang, J.~Dong, L.~Hu, ``A data-driven optimization-based approach for siting and sizing of electric taxi charging stations,'' \emph{Transportation Research Part C}, 77:462--477, 2017.
+\bibitem{green2001} L.~V.~Green, P.~J.~Kolesar, J.~Soares, ``Improving the SIPP approach for staffing service systems that have cyclic demands,'' \emph{Operations Research}, 49(4):549--564, 2001.
+\bibitem{fox1966} B.~Fox, ``Discrete optimization via marginal analysis,'' \emph{Management Science}, 13(3):210--216, 1966.
+\bibitem{hillier} F.~S.~Hillier, G.~J.~Lieberman, \emph{Introduction to Operations Research}, McGraw-Hill (course textbook).
+\bibitem{cnev2024} CnEVPost, ``Shenzhen NEV penetration reaches record 77.4\% in Jun,'' Jul.~18, 2024. \url{https://cnevpost.com/2024/07/18/shenzhen-nev-penetration-jun-2024/}
+\bibitem{cnev2025} CnEVPost, ``China NEV ownership reaches 36.89 million,'' Jul.~14, 2025. \url{https://cnevpost.com/2025/07/14/china-nev-ownership-36-89-million-jun-2025/}
+\end{thebibliography}
+
+\appendix
+\section{Reproducibility}
+All results can be regenerated from the ZIP file (Python 3; numpy, pandas, scipy/HiGHS, networkx, matplotlib):
+\begin{center}\small
+\begin{tabular}{@{}ll@{}}\toprule
+file & content\\\midrule
+\texttt{code/common.py} & data loading, Erlang-B/C, vectorised waiting curves\\
+\texttt{code/m1\_queueing.py} & M1 diagnosis (Table~\ref{tab:m1}, title-page map)\\
+\texttt{code/m2\_ip\_allocation.py} & M2 MILP, budget sweep, $\kappa$ and growth sensitivity\\
+\texttt{code/m3\_network\_flow.py} & M3 min-cost flow, network simplex cross-check\\
+\texttt{code/m4\_pricing\_nlp.py}, \texttt{m4\_moderate.py} & M4 $\beta$ estimation, NLP, KKT check, robustness\\
+\texttt{code/m5\_simulation\_sa.py} & M5 simulation, verification, simulated annealing\\
+\texttt{code/integrate.py} & integrated policy table, shadow prices\\
+\texttt{results/}, \texttt{figures/} & all outputs (CSV/JSON) and figures\\\bottomrule
+\end{tabular}\end{center}
+Data: UrbanEV, \url{https://github.com/IntelligentSystemsLab/UrbanEV} (CC0). Base parameters: $g=2$, $\kappa=0.35$, $\rho^*=0.85$, $D_{\max}=3$\,km, $\hat\beta=0.281$, $\tau=1$\,h, session CV 0.8, spill-over threshold 3 queued drivers within 3\,km, detour value 0.05\,h/km.
+\end{document}

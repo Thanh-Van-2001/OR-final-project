@@ -1,0 +1,45 @@
+{
+  "1.0": {
+    "unstable_zones": 0,
+    "zones_pwait_gt_0_5": 0,
+    "zones_peak_util_gt_0_85": 1,
+    "wait_hours_day_stable_zones": 97.42578932518902,
+    "arrivals_day": 117918.61602209945,
+    "network_util_mean": 0.2802461594562786,
+    "piles_total": 17532
+  },
+  "1.5": {
+    "unstable_zones": 13,
+    "zones_pwait_gt_0_5": 22,
+    "zones_peak_util_gt_0_85": 29,
+    "wait_hours_day_stable_zones": 2066.4996621279643,
+    "arrivals_day": 176877.92403314915,
+    "network_util_mean": 0.4203692391844179,
+    "piles_total": 17532
+  },
+  "2.0": {
+    "unstable_zones": 48,
+    "zones_pwait_gt_0_5": 61,
+    "zones_peak_util_gt_0_85": 80,
+    "wait_hours_day_stable_zones": 2365.8732226385887,
+    "arrivals_day": 235837.2320441989,
+    "network_util_mean": 0.5604923189125572,
+    "piles_total": 17532
+  },
+  "2.5": {
+    "unstable_zones": 91,
+    "zones_pwait_gt_0_5": 104,
+    "zones_peak_util_gt_0_85": 115,
+    "wait_hours_day_stable_zones": 3241.250732657143,
+    "arrivals_day": 294796.5400552486,
+    "network_util_mean": 0.7006153986406966,
+    "piles_total": 17532
+  },
+  "tau_sensitivity_g1.5_wait_hours": {
+    "0.5": 2066.4996621279643,
+    "1.0": 2066.4996621279643,
+    "2.0": 2066.4996621279643
+  },
+  "design_day_p90_zones_saturated": 10,
+  "mean_day_zones_saturated": 0
+}

@@ -1,0 +1,190 @@
+{
+  "beta_estimate": {
+    "beta": 0.28065793108433484,
+    "se": 0.12724196602637458,
+    "t": -2.205702566920102,
+    "tou_zones": 118,
+    "flat_zones": 157,
+    "mean_total_price": 1.6165554108565279,
+    "tou_spread_median": 0.08764709944751381
+  },
+  "baseline": {
+    "congestion": 255499.38725947018,
+    "network_peak": 11684.729281767955,
+    "peak_to_mean": 1.189097668471084,
+    "unstable_zones": 48,
+    "piles_needed_for_stability": 598,
+    "revenue_per_kwh": 0.7273624117117821,
+    "mean_total_price_paid": 1.673686042252899
+  },
+  "optimised": {
+    "A": {
+      "metrics": {
+        "congestion": 129371.39137509115,
+        "network_peak": 10621.076793487748,
+        "peak_to_mean": 1.080854964393126,
+        "unstable_zones": 45,
+        "piles_needed_for_stability": 403,
+        "revenue_per_kwh": 0.7273624117117821,
+        "mean_total_price_paid": 1.6788340397119905
+      },
+      "fee": [
+        1.2938358287189673,
+        1.4999980446059187,
+        1.381747161176729,
+        1.3594719073459471,
+        1.3671153637450206,
+        1.393089858163812,
+        1.4497424935226197,
+        1.380824231594661,
+        0.7557961992090046,
+        0.20000119349431142,
+        0.20000008461563834,
+        0.20000007890751403,
+        0.20000010070778043,
+        0.3049166461864585,
+        0.20000014255625523,
+        0.20000011614437968,
+        0.2000001153129305,
+        0.20000008829241903,
+        0.20000008569357164,
+        0.2000000893109712,
+        0.4578631565328887,
+        0.771440738539621,
+        1.0288829628476408,
+        1.1773571950816846
+      ],
+      "mu": 0.19070417922251723,
+      "kkt_resid": 8.040152433500675e-08,
+      "free_vars": 13,
+      "obj_rel": 0.5063471688239672,
+      "slsqp_obj_rel": 0.5063471462448785,
+      "revenue_slack": 0.0
+    },
+    "B": {
+      "metrics": {
+        "congestion": 133780.8685319344,
+        "network_peak": 9906.875072599392,
+        "peak_to_mean": 1.0081741533407467,
+        "unstable_zones": 44,
+        "piles_needed_for_stability": 418,
+        "revenue_per_kwh": 0.7273624117117821,
+        "mean_total_price_paid": 1.6782694200319346
+      },
+      "fee": [
+        1.2162504094147293,
+        1.3929067028823796,
+        1.3498615380931143,
+        1.3188615062576354,
+        1.3019834282332325,
+        1.3096967838798985,
+        1.325401549783136,
+        1.2389833701145572,
+        0.7465846425415589,
+        0.4403377106752729,
+        0.2863329465675625,
+        0.2000116738873033,
+        0.24422559575729721,
+        0.3741046992706256,
+        0.20000736014069428,
+        0.2000018556111802,
+        0.20000187738978964,
+        0.20000221478144165,
+        0.2000045676247609,
+        0.3022056680224037,
+        0.6109746219188947,
+        0.7699308023268878,
+        0.9147101262506306,
+        1.0328920581232481
+      ],
+      "mu": 0.00387341741598617,
+      "kkt_resid": 6.291325399366914e-08,
+      "free_vars": 18,
+      "obj_rel": 0.982802086043037,
+      "slsqp_obj_rel": 0.982802073665835,
+      "revenue_slack": 0.0
+    }
+  },
+  "beta_sensitivity_objA": {
+    "0.1": {
+      "metrics": {
+        "congestion": 179206.80753670394,
+        "network_peak": 10877.633410037508,
+        "peak_to_mean": 1.1069634746729626,
+        "unstable_zones": 45,
+        "piles_needed_for_stability": 472,
+        "revenue_per_kwh": 0.7273624117117536,
+        "mean_total_price_paid": 1.6757714919911688
+      },
+      "baseline": {
+        "congestion": 255499.38725947012,
+        "network_peak": 11684.729281767955,
+        "peak_to_mean": 1.189097668471084,
+        "unstable_zones": 48,
+        "piles_needed_for_stability": 598,
+        "revenue_per_kwh": 0.7273624117117821,
+        "mean_total_price_paid": 1.6736860422528985
+      }
+    },
+    "0.281": {
+      "metrics": {
+        "congestion": 129371.39137509115,
+        "network_peak": 10621.076793487748,
+        "peak_to_mean": 1.080854964393126,
+        "unstable_zones": 45,
+        "piles_needed_for_stability": 403,
+        "revenue_per_kwh": 0.7273624117117821,
+        "mean_total_price_paid": 1.6788340397119905
+      },
+      "baseline": {
+        "congestion": 255499.38725947018,
+        "network_peak": 11684.729281767955,
+        "peak_to_mean": 1.189097668471084,
+        "unstable_zones": 48,
+        "piles_needed_for_stability": 598,
+        "revenue_per_kwh": 0.7273624117117821,
+        "mean_total_price_paid": 1.673686042252899
+      }
+    },
+    "0.6": {
+      "metrics": {
+        "congestion": 126240.38821137769,
+        "network_peak": 10596.44140701079,
+        "peak_to_mean": 1.0783479417728123,
+        "unstable_zones": 45,
+        "piles_needed_for_stability": 403,
+        "revenue_per_kwh": 0.7273624117117821,
+        "mean_total_price_paid": 1.679585195671463
+      },
+      "baseline": {
+        "congestion": 255499.38725947007,
+        "network_peak": 11684.729281767955,
+        "peak_to_mean": 1.189097668471084,
+        "unstable_zones": 48,
+        "piles_needed_for_stability": 598,
+        "revenue_per_kwh": 0.7273624117117821,
+        "mean_total_price_paid": 1.6736860422528985
+      }
+    },
+    "1.0": {
+      "metrics": {
+        "congestion": 126240.38821137755,
+        "network_peak": 10596.441321041802,
+        "peak_to_mean": 1.0783479330241694,
+        "unstable_zones": 45,
+        "piles_needed_for_stability": 403,
+        "revenue_per_kwh": 0.727362411711782,
+        "mean_total_price_paid": 1.6795851957475598
+      },
+      "baseline": {
+        "congestion": 255499.38725947024,
+        "network_peak": 11684.729281767959,
+        "peak_to_mean": 1.1890976684710843,
+        "unstable_zones": 48,
+        "piles_needed_for_stability": 598,
+        "revenue_per_kwh": 0.7273624117117821,
+        "mean_total_price_paid": 1.673686042252899
+      }
+    }
+  }
+}

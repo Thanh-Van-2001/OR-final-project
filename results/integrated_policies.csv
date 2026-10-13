@@ -1,0 +1,13 @@
+growth,policy,unstable_zones,piles_needed,min_budget_for_target,target_wait_hours_day
+1.5,none,13,61,41.0,737.0
+1.5,pricing,10,40,20.9,737.0
+1.5,guidance_3km,3,18,10.6,737.0
+1.5,pricing+guidance,3,20,10.6,737.0
+2.0,none,48,598,347.9,982.7
+2.0,pricing,45,403,226.0,982.7
+2.0,guidance_3km,17,185,138.1,982.7
+2.0,pricing+guidance,12,107,80.9,982.7
+2.5,none,91,1931,1266.4,1228.3
+2.5,pricing,87,1467,744.1,1228.3
+2.5,guidance_3km,46,1144,857.3,1228.3
+2.5,pricing+guidance,32,568,349.7,1228.3
