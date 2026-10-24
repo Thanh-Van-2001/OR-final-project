@@ -23,3 +23,5 @@ data/UrbanEV/data/*
 # private copy of team details (student IDs) for the printed submission
 reports/team_private.tex
 *.zip.part
+# submitted copies of the reports with student IDs (reports/build_reports.py)
+submission/

@@ -5,7 +5,7 @@
 \usepackage[font=small,labelfont=bf]{caption}
 \setlength{\parskip}{4pt}\setlength{\parindent}{0pt}
 \newcommand{\TODO}[1]{\textcolor{red}{[#1]}}
-\IfFileExists{../team_private.tex}{\input{../team_private.tex}}{\input{../team.tex}}
+\ifdefined\PublicBuild\input{../team.tex}\else\IfFileExists{../team_private.tex}{\input{../team_private.tex}}{\input{../team.tex}}\fi
 
 \begin{document}
 \begin{center}

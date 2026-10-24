@@ -1,5 +1,6 @@
 """Package the project for Web Learning: every file in the repository (tracked or new, minus git-ignored ones)
 plus the compiled reports and slides, into OR_Final_Project_RightPlaceRightTime.zip.
+Reports are taken from submission/ (copies with student IDs, made by reports/build_reports.py) when present.
 Written to a temporary file first and moved into place only when complete."""
 import os
 import subprocess
@@ -20,7 +21,9 @@ assert not missing, f'build these first: {missing}'
 tmp = OUT.with_suffix('.zip.part')
 with zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as z:
     for f in files:
-        z.write(ROOT / f, f)
+        # submitted copies of the reports carry the student IDs (submission/ is git-ignored)
+        sub = ROOT / 'submission' / Path(f).name
+        z.write(sub if f in REQUIRED and sub.is_file() else ROOT / f, f)
 with zipfile.ZipFile(tmp) as z:
     assert z.testzip() is None
 os.replace(tmp, OUT)

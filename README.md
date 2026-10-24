@@ -1,6 +1,6 @@
 # Right Place, Right Time — Capacity, Guidance and Pricing for Public EV Charging in Shenzhen
 
-Operations Research 76000093 — Final Project. Team: Nguyen Van Thanh, [Member 2], [Member 3], [Member 4], [Member 5].
+Operations Research 76000093 — Final Project. Team: Do Ngoc Mai, Astryd Salgado, Tang Yan, Sany Rabius, Nguyen Van Thanh.
 
 ## Deliverables
 | File | Content |
@@ -41,7 +41,7 @@ python integrate.py          # ~12 min
 ```
 Outputs are written to `results/` and `figures/`.
 
-Reports: team names are set once in `reports/team.tex` (a git-ignored `reports/team_private.tex`, if present, is used instead, e.g. with student IDs for the printed copy); compile each `.tex` with pdflatex. Slides: `reports/slides/export_slides.py` renders the deck to PDF and `make_pptx.py` builds the PowerPoint file. `python build_zip.py` packages everything for Web Learning.
+Reports: team names and method owners are set once in `reports/team.tex`; `python reports/build_reports.py` compiles all three reports. With a git-ignored `reports/team_private.tex` (same macros, plus student IDs) it also writes the submitted copies to the git-ignored `submission/` folder, which `build_zip.py` puts in the ZIP. Slides: `reports/slides/export_slides.py` renders the deck to PDF and `make_pptx.py` builds the PowerPoint file. `python build_zip.py` packages everything for Web Learning.
 
 ## Key results (demand ×2)
 - 48 of 275 zones become unstable, while network-average utilisation is only 56%.

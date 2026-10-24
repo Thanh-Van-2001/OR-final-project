@@ -9,7 +9,7 @@
 \newcommand{\TODO}[1]{\textcolor{red}{[#1]}}
 \newcommand{\fig}[1]{../../figures/#1}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
-\IfFileExists{../team_private.tex}{\input{../team_private.tex}}{\input{../team.tex}}
+\ifdefined\PublicBuild\input{../team.tex}\else\IfFileExists{../team_private.tex}{\input{../team_private.tex}}{\input{../team.tex}}\fi
 
 \begin{document}
 \hypersetup{pageanchor=false}
